@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MontroLabs — Assessment Review Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#1A2A40;--blue:#3578C4;--blue-dark:#245FAA;--blue-tint:#EBF3FC;
+  --gray:#5A6777;--gray-light:#8596A8;--bg:#EEF2F7;--surface:#FFFFFF;
+  --border:#D8E1EE;--border-light:#EAF0F8;--text:#1A2A40;--muted:#5A6777;
+  --success:#0E7C5A;--success-tint:#E8F7F2;--warn:#B45309;--warn-tint:#FEF3C7;
+  --danger:#C0392B;--danger-tint:#FDECEA;--orange:#C05621;--orange-tint:#FEF0E6;
+  --radius:10px;--shadow:0 1px 3px rgba(26,42,64,.07),0 4px 12px rgba(26,42,64,.05);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.hdr{background:var(--navy);padding:0 24px;display:flex;align-items:center;gap:12px;height:58px;position:sticky;top:0;z-index:20;}
+.hdr-logo{display:flex;align-items:center;gap:9px;}
+.hdr-shield{width:30px;height:30px;}
+.hdr-brand{color:#fff;font-weight:600;font-size:15px;}
+.hdr-brand span{color:#5B9BD5;}
+.hdr-div{width:1px;height:22px;background:rgba(255,255,255,.15);}
+.hdr-subtitle{color:rgba(255,255,255,.55);font-size:12px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.btn-sm{font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500;border:none;transition:all .15s;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-dark);}
+.btn-ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);}
+.btn-ghost:hover{background:rgba(255,255,255,.2);}
+.page{padding:24px;max-width:1100px;margin:0 auto;}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.stat-val{font-size:26px;font-weight:700;color:var(--navy);line-height:1;}
+.stat-lbl{font-size:11px;color:var(--gray-light);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+.stat-trend{font-size:11px;margin-top:6px;}
+
+/* Filters */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.filter-btn{font-size:12px;padding:5px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--gray);cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;}
+.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.filter-lbl{font-size:12px;color:var(--gray);font-weight:500;}
+
+/* Queue cards */
+.queue-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;transition:border-color .15s;}
+.queue-card:hover{border-color:var(--blue);}
+.qc-thumb{width:72px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--bg);}
+.qc-thumb-placeholder{width:72px;height:52px;border-radius:6px;background:var(--bg);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gray-light);font-size:20px;}
+.qc-info{flex:1;min-width:0;}
+.qc-id{font-size:10px;color:var(--gray-light);font-weight:600;letter-spacing:.06em;margin-bottom:2px;}
+.qc-name{font-size:14px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qc-meta{font-size:11px;color:var(--gray);margin-top:3px;}
+.qc-score{text-align:center;flex-shrink:0;width:70px;}
+.qc-score-num{font-size:22px;font-weight:700;line-height:1;}
+.qc-score-grade{font-size:10px;font-weight:600;margin-top:2px;}
+.qc-status{flex-shrink:0;}
+.status-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;letter-spacing:.05em;display:inline-block;}
+.status-pending{background:var(--warn-tint);color:var(--warn);}
+.status-approved{background:var(--success-tint);color:var(--success);}
+.status-revision{background:var(--danger-tint);color:var(--danger);}
+.status-review{background:var(--blue-tint);color:var(--blue);}
+.qc-actions{flex-shrink:0;display:flex;gap:6px;}
+.btn-review{font-size:12px;padding:7px 16px;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;background:var(--blue);color:#fff;border:none;white-space:nowrap;}
+.btn-view{font-size:12px;padding:7px 16px;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:500;background:var(--bg);color:var(--gray);border:1px solid var(--border);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+
+/* Performance insights */
+.insights-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;box-shadow:var(--shadow);}
+.insights-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:14px;}
+.insight-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.insight-domain{font-size:12px;font-weight:500;color:var(--navy);min-width:150px;}
+.insight-bar-wrap{flex:1;height:5px;background:var(--border-light);border-radius:999px;overflow:hidden;}
+.insight-bar{height:100%;border-radius:999px;}
+.insight-val{font-size:11px;font-weight:600;min-width:60px;text-align:right;}
+
+/* Review UI */
+.review-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;position:sticky;top:58px;z-index:15;display:flex;align-items:center;gap:14px;}
+.back-btn{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--gray);font-weight:500;display:flex;align-items:center;gap:5px;}
+.review-client{flex:1;}
+.review-client-name{font-size:15px;font-weight:600;color:var(--navy);}
+.review-client-meta{font-size:11px;color:var(--gray);}
+.review-score-badge{border-radius:8px;padding:8px 16px;text-align:center;}
+.review-score-num{font-size:22px;font-weight:700;}
+.review-score-grade{font-size:11px;font-weight:600;}
+
+/* Step progress */
+.step-progress{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:4px;overflow-x:auto;}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:70px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background .15s;}
+.step-item:hover{background:var(--bg);}
+.step-item.active{background:var(--blue-tint);}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid var(--border);color:var(--gray);background:var(--surface);}
+.step-item.done .step-dot{background:var(--success);border-color:var(--success);color:#fff;}
+.step-item.active .step-dot{background:var(--blue);border-color:var(--blue);color:#fff;}
+.step-lbl{font-size:9px;font-weight:500;color:var(--gray);text-align:center;letter-spacing:.04em;line-height:1.3;}
+.step-item.active .step-lbl{color:var(--blue);}
+.step-item.done .step-lbl{color:var(--success);}
+
+/* Domain review panel */
+.review-body{padding:20px 24px;max-width:960px;margin:0 auto;}
+.domain-panel{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.panel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:12px;}
+.ai-score-display{display:flex;align-items:baseline;gap:6px;margin-bottom:14px;}
+.ai-score-num{font-size:32px;font-weight:700;}
+.ai-score-max{font-size:14px;color:var(--gray);}
+.ai-score-label{font-size:11px;color:var(--gray-light);}
+
+/* Checklist */
+.checklist-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;padding:9px 10px;background:var(--bg);border-radius:7px;border:1px solid var(--border-light);cursor:pointer;transition:all .15s;}
+.checklist-item:hover{border-color:var(--blue);}
+.checklist-item.checked{background:var(--success-tint);border-color:#6FCFB0;}
+.checklist-item input[type=checkbox]{accent-color:var(--success);width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+.checklist-text{font-size:12px;color:var(--text);line-height:1.4;flex:1;}
+.checklist-std{font-size:10px;color:var(--gray-light);margin-top:2px;}
+
+/* Finding verdicts */
+.finding-review{border-radius:8px;padding:11px 12px;margin-bottom:8px;border-left:3px solid;}
+.finding-rev-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.finding-rev-sev{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;}
+.finding-rev-std{font-size:9px;color:var(--gray);margin-left:auto;}
+.finding-rev-txt{font-size:12px;color:var(--navy);font-weight:500;margin-bottom:4px;line-height:1.4;}
+.finding-rev-rec{font-size:11px;color:var(--success);margin-bottom:8px;}
+.verdict-btns{display:flex;gap:5px;flex-wrap:wrap;}
+.verdict-btn{font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--gray);transition:all .15s;}
+.verdict-btn.confirmed{background:var(--success-tint);border-color:#6FCFB0;color:var(--success);}
+.verdict-btn.partial{background:var(--warn-tint);border-color:#F6C864;color:var(--warn);}
+.verdict-btn.incorrect{background:var(--danger-tint);border-color:#F5A89E;color:var(--danger);}
+.verdict-note{width:100%;margin-top:5px;font-size:11px;padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-family:inherit;background:var(--bg);color:var(--text);}
+.verdict-note:focus{outline:none;border-color:var(--blue);}
+.add-finding-btn{font-size:12px;padding:7px 14px;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:500;background:var(--bg);color:var(--blue);border:1px dashed var(--blue);width:100%;margin-top:8px;transition:all .15s;}
+.add-finding-btn:hover{background:var(--blue-tint);}
+.missed-finding-form{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;}
+.missed-finding-form input,.missed-finding-form select,.missed-finding-form textarea{width:100%;margin-bottom:7px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;color:var(--text);}
+.missed-finding-form textarea{resize:vertical;}
+.missed-item{display:flex;justify-content:space-between;align-items:flex-start;background:var(--orange-tint);border:1px solid #FBBB8A;border-radius:6px;padding:8px 10px;margin-bottom:5px;}
+.missed-item-txt{font-size:11px;color:var(--orange);flex:1;}
+.rm-missed{background:none;border:none;color:var(--orange);cursor:pointer;font-size:14px;padding:0 4px;}
+
+/* Adjusted score */
+.adj-score-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);}
+.adj-score-lbl{font-size:12px;font-weight:500;color:var(--navy);flex:1;}
+.adj-score-input{width:60px;text-align:center;font-size:18px;font-weight:700;padding:5px 8px;border:2px solid var(--border);border-radius:7px;font-family:inherit;color:var(--navy);}
+.adj-score-input:focus{outline:none;border-color:var(--blue);}
+.adj-score-max{font-size:13px;color:var(--gray);}
+
+/* Nav buttons */
+.review-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.nav-btn{font-size:13px;padding:9px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--navy);}
+.nav-btn:hover{background:var(--bg);}
+.nav-btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.nav-btn-primary:hover{background:var(--blue-dark);}
+
+/* Overall step */
+.overall-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.summary-table{width:100%;border-collapse:collapse;}
+.summary-table td{padding:6px 8px;font-size:12px;border-bottom:1px solid var(--border-light);}
+.summary-table td:first-child{color:var(--gray);font-weight:500;}
+.summary-table td:last-child{font-weight:600;text-align:right;}
+.delta-pos{color:var(--success);}
+.delta-neg{color:var(--danger);}
+.delta-zero{color:var(--gray);}
+.approval-choice{display:flex;gap:10px;margin-top:12px;}
+.approval-opt{flex:1;border:2px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;text-align:center;transition:all .15s;}
+.approval-opt:hover{border-color:var(--blue);}
+.approval-opt.selected-approve{border-color:var(--success);background:var(--success-tint);}
+.approval-opt.selected-revision{border-color:var(--danger);background:var(--danger-tint);}
+.approval-icon{font-size:22px;margin-bottom:4px;}
+.approval-label{font-size:13px;font-weight:600;}
+.approval-sub{font-size:11px;color:var(--gray);margin-top:3px;}
+.notes-ta{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;resize:vertical;background:var(--bg);}
+.notes-ta:focus{outline:none;border-color:var(--blue);}
+.total-score-row{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:8px;padding:14px;margin-top:12px;}
+.total-score-lbl{font-size:13px;font-weight:500;color:var(--navy);flex:1;}
+.total-score-orig{font-size:12px;color:var(--gray);text-decoration:line-through;}
+.total-score-val{font-size:28px;font-weight:700;color:var(--blue);}
+.submit-btn{width:100%;background:var(--navy);border:none;border-radius:8px;padding:14px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:14px;transition:background .2s;}
+.submit-btn:hover{background:#0F1C2D;}
+.feedback-export{font-size:12px;padding:7px 14px;border-radius:7px;cursor:pointer;font-family:inherit;background:var(--bg);border:1px solid var(--border);color:var(--gray);}
+
+/* Confirmation screen */
+.confirm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:var(--shadow);}
+.confirm-icon{font-size:48px;margin-bottom:12px;}
+.confirm-title{font-size:20px;font-weight:600;color:var(--navy);margin-bottom:8px;}
+.confirm-sub{font-size:13px;color:var(--gray);margin-bottom:20px;}
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0;}
+.metric-box{background:var(--bg);border-radius:8px;padding:12px;}
+.metric-val{font-size:22px;font-weight:700;}
+.metric-lbl{font-size:11px;color:var(--gray);margin-top:3px;}
+@media(max-width:680px){.domain-panel{grid-template-columns:1fr;}.overall-grid{grid-template-columns:1fr;}.stats-bar{grid-template-columns:1fr 1fr;}.metrics-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="gate" style="position:fixed;inset:0;background:#1A2A40;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:'Inter',system-ui,sans-serif;">
+  <div style="background:#0D1520;border:1px solid #D8E1EE;border-radius:12px;padding:40px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <svg width="48" height="48" viewBox="0 0 32 32" fill="none" style="margin-bottom:16px">
+      <path d="M16 2L6 7v8c0 6 4.4 11.6 10 13 5.6-1.4 10-7 10-13V7L16 2z" fill="#3578C4" fill-opacity=".25" stroke="#3578C4" stroke-width="1.5"/>
+      <rect x="11" y="10" width="3" height="8" rx="1" fill="#fff" fill-opacity=".85"/>
+      <rect x="18" y="10" width="3" height="8" rx="1" fill="#fff" fill-opacity=".85"/>
+      <rect x="10" y="14" width="12" height="4" rx="1" fill="#3578C4" fill-opacity=".8"/>
+    </svg>
+    <div style="color:#5B9BD5;font-size:10px;font-weight:600;letter-spacing:.15em;margin-bottom:6px">MONTROLABS</div>
+    <div style="color:#FFFFFF;font-size:17px;font-weight:600;margin-bottom:4px">Review Dashboard</div>
+    <div style="color:#5A6777;font-size:12px;margin-bottom:24px">Internal access only</div>
+    <input type="password" id="gate-input" placeholder="Enter access password"
+      style="width:100%;background:#111827;border:1px solid #D8E1EE;border-radius:8px;padding:10px 14px;color:#FFFFFF;font-size:14px;font-family:inherit;margin-bottom:10px;outline:none;text-align:center"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <div id="gate-err" style="color:#C0392B;font-size:12px;margin-bottom:8px;display:none">Incorrect password</div>
+    <button onclick="checkPass()"
+      style="width:100%;background:#3578C4;border:none;border-radius:8px;padding:11px;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">
+      Access Dashboard
+    </button>
+  </div>
+</div>
+
+<script>
+// Simple password gate - change REVIEW_PASSWORD to your chosen password
+const REVIEW_PASSWORD = 'MOAT2026!';
+
+function checkPass(){
+  var input = document.getElementById('gate-input').value;
+  if(input === REVIEW_PASSWORD){
+    document.getElementById('gate').style.display='none';
+    sessionStorage.setItem('moat_review_auth','1');
+  } else {
+    var err = document.getElementById('gate-err');
+    err.style.display='block';
+    document.getElementById('gate-input').value='';
+    document.getElementById('gate-input').focus();
+  }
+}
+
+// Auto-unlock if already authenticated this session
+if(sessionStorage.getItem('moat_review_auth')==='1'){
+  document.getElementById('gate').style.display='none';
+}
+
+// Focus input on load
+window.addEventListener('load', function(){
+  var g = document.getElementById('gate');
+  if(g && g.style.display !== 'none'){
+    document.getElementById('gate-input').focus();
+  }
+});
+</script>
+
+
+<div class="hdr">
+  <div class="hdr-logo">
+    <svg class="hdr-shield" viewBox="0 0 32 32" fill="none">
+      <path d="M16 2L6 7v8c0 6 4.4 11.6 10 13 5.6-1.4 10-7 10-13V7L16 2z" fill="#3578C4" fill-opacity=".25" stroke="#3578C4" stroke-width="1.5"/>
+      <rect x="11" y="10" width="3" height="8" rx="1" fill="#fff" fill-opacity=".85"/>
+      <rect x="18" y="10" width="3" height="8" rx="1" fill="#fff" fill-opacity=".85"/>
+      <rect x="10" y="14" width="12" height="4" rx="1" fill="#3578C4" fill-opacity=".8"/>
+    </svg>
+    <span class="hdr-brand">Montro<span>Labs</span></span>
+  </div>
+  <div class="hdr-div"></div>
+  <span class="hdr-subtitle">HITL Assessment Review Dashboard</span>
+  <div class="hdr-actions">
+    <button class="btn-sm btn-ghost" onclick="showView('calibration')">Prompt Calibration</button>
+    <button class="btn-sm btn-ghost" onclick="exportFeedback()">Export Feedback JSON</button>
+    <button class="btn-sm btn-ghost" onclick="clearAll()" style="color:#F5A89E;">Clear Queue</button>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<script>
+// ── Brand palette ────────────────────────────────────────────────────────────
+const C = {
+  success:'#0E7C5A', warn:'#B45309', danger:'#C0392B',
+  orange:'#C05621', blue:'#3578C4', navy:'#1A2A40', gray:'#5A6777'
+};
+
+// ── Standards checklists per domain ─────────────────────────────────────────
+const CHECKLISTS = {
+  perimeter:[
+    {id:'p1',text:'Fencing height meets minimum (NFPA 730 §4.1 — 7ft commercial)',std:'NFPA 730 §4.1'},
+    {id:'p2',text:'Gate hardware assessed: shrouded shackle, case-hardened Grade 6+',std:'ASIS SPC.1'},
+    {id:'p3',text:'Vehicle access control barriers evaluated (ASTM F2656 rated)',std:'ASTM F2656'},
+    {id:'p4',text:'Perimeter lighting continuity checked — no gaps >30ft along fence line',std:'IESNA RP-33'},
+    {id:'p5',text:'Barrier integrity assessed: no gaps, damage, or compromised sections',std:'NFPA 730 §4'},
+  ],
+  surveillance:[
+    {id:'s1',text:'Camera coverage assessed at all perimeter entry and exit points',std:'NFPA 730 §7'},
+    {id:'s2',text:'Natural sightlines from occupied spaces evaluated (windows, reception)',std:'CPTED P1'},
+    {id:'s3',text:'Landscaping obstruction of camera or natural views identified',std:'CPTED P1'},
+    {id:'s4',text:'Blind spots documented: parking areas, building sides, loading zones',std:'CPTED P1'},
+    {id:'s5',text:'Nighttime surveillance capability noted (IR cameras, lighting support)',std:'NFPA 730 §7'},
+  ],
+  access:[
+    {id:'a1',text:'Primary entry hardware grade identified — ANSI/BHMA Grade 1 required',std:'ANSI/ASIS PSC.1'},
+    {id:'a2',text:'Electronic access control (card, fob, biometric) presence assessed',std:'ANSI/ASIS PSC.1 §6'},
+    {id:'a3',text:'Visitor management or sign-in system evaluated',std:'ANSI/ASIS PSC.1'},
+    {id:'a4',text:'Emergency exits verified as hardware-only egress (no external entry)',std:'NFPA 101 §7.2.1'},
+    {id:'a5',text:'Tailgating / piggybacking vulnerability noted at controlled entries',std:'CPTED P2'},
+  ],
+  lighting:[
+    {id:'l1',text:'Parking areas: 0.5 fc average illuminance minimum (IESNA RP-33)',std:'IESNA RP-33'},
+    {id:'l2',text:'Pedestrian walkways and paths: 1.0 fc average minimum',std:'IESNA RP-33'},
+    {id:'l3',text:'Entry and exit points: 5.0 fc average minimum',std:'IESNA RP-33'},
+    {id:'l4',text:'Uniformity ratio assessed — max:min illuminance ≤ 4:1',std:'IESNA RP-33'},
+    {id:'l5',text:'Dark zones, dead spots, and shadow pockets identified and located',std:'NFPA 730 §5'},
+  ],
+  landscape:[
+    {id:'lc1',text:'Concealment vegetation within 3ft of building walls identified',std:'CPTED P3'},
+    {id:'lc2',text:'Clear zone maintenance level assessed (0–3ft: trimmed; 3–8ft: clear)',std:'CPTED P3'},
+    {id:'lc3',text:'Territorial markers present: fencing, signage, planting borders',std:'CPTED P3'},
+    {id:'lc4',text:'Shrubs trimmed below 3ft; trees limbed up to 7ft from ground',std:'CPTED P3'},
+    {id:'lc5',text:'Overall maintenance level assessed as CPTED P4 signal to would-be offenders',std:'CPTED P4'},
+  ],
+  emergency:[
+    {id:'e1',text:'Illuminated exit signs visible at all exits and direction-change points',std:'NFPA 101 §7.10'},
+    {id:'e2',text:'Egress path width assessed — minimum 28 inches clear',std:'NFPA 101 Ch.7'},
+    {id:'e3',text:'Emergency egress lighting present — 1.0 fc minimum on path',std:'NFPA 101 §7.9'},
+    {id:'e4',text:'Portable fire extinguishers visible and tagged current (NFPA 10)',std:'NFPA 10'},
+    {id:'e5',text:'AED presence and signage noted where applicable',std:'NFPA 101'},
+  ],
+  signage:[
+    {id:'sg1',text:'No-trespass signage at all perimeter entry points (constructive notice)',std:'State trespass statute'},
+    {id:'sg2',text:'"Under Video Surveillance" notices posted at camera coverage areas',std:'CPTED P1 / deterrence'},
+    {id:'sg3',text:'Emergency and egress exit signage per IFC Chapter 10',std:'IFC §1013'},
+    {id:'sg4',text:'"NOT AN EXIT" marking on non-egress doors visible and legible',std:'OSHA 1910.37'},
+    {id:'sg5',text:'All signage legible, current, unobstructed, and in good condition',std:'CPTED P4'},
+  ],
+};
+
+const DOMAINS = [
+  {id:'perimeter',label:'Perimeter Security',max:20},
+  {id:'surveillance',label:'Natural Surveillance',max:20},
+  {id:'access',label:'Access Control',max:20},
+  {id:'lighting',label:'Lighting Adequacy',max:15},
+  {id:'landscape',label:'Landscape / CPTED',max:15},
+  {id:'emergency',label:'Emergency Readiness',max:10},
+  {id:'signage',label:'Signage & Deterrence',max:10},
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {
+  view: 'queue', // queue | review | confirm
+  filter: 'all',
+  assessments: [],
+  currentId: null,
+  currentStep: 0, // 0-6 = domains, 7 = overall
+  review: null,   // live review state
+  showMissedForm: {}, // domainId: bool
+};
+
+function gradeOf(s){
+  if(s>=85)return{g:'A',label:'Excellent',c:C.success};
+  if(s>=70)return{g:'B',label:'Good',c:C.blue};
+  if(s>=55)return{g:'C',label:'Fair',c:C.warn};
+  if(s>=40)return{g:'D',label:'Poor',c:C.orange};
+  return{g:'F',label:'Critical',c:C.danger};
+}
+function sevColor(s){return{critical:C.danger,high:C.orange,moderate:C.warn,low:C.success}[s]||C.gray;}
+function sevBg(s){return{critical:'#FDECEA',high:'#FEF0E6',moderate:'#FEF3C7',low:'#E8F7F2'}[s]||'#EEF2F7';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+function loadAssessments(){
+  try{return JSON.parse(localStorage.getItem('montrolabs_queue')||'[]');}catch{return[];}
+}
+function saveAssessments(arr){
+  try{localStorage.setItem('montrolabs_queue',JSON.stringify(arr));}catch(e){alert('Storage full: '+e.message);}
+}
+function getAssessment(id){return state.assessments.find(a=>a.id===id);}
+
+// ── Review init ──────────────────────────────────────────────────────────────
+function initReview(assessment){
+  var dv = {};
+  DOMAINS.forEach(function(d){
+    var sc = (assessment.analysis.domainScores||{})[d.id]||0;
+    var checks = {};
+    CHECKLISTS[d.id].forEach(function(item){checks[item.id]=false;});
+    dv[d.id]={
+      standardsChecked: checks,
+      findingVerdicts: {},
+      findingNotes: {},
+      missedFindings: [],
+      adjustedScore: sc,
+    };
+  });
+  return {
+    assessmentId: assessment.id,
+    startedAt: new Date().toISOString(),
+    domainVerifications: dv,
+    overallNotes: '',
+    adjustedTotalScore: assessment.analysis.overallScore||0,
+    approvalStatus: null,
+  };
+}
+
+// ── Stats calc ───────────────────────────────────────────────────────────────
+function calcStats(assessments){
+  var total=assessments.length, pending=0, approved=0, revision=0, totalAccuracy=0, count=0;
+  assessments.forEach(function(a){
+    if(a.status==='pending_review'||a.status==='in_review') pending++;
+    else if(a.status==='approved') approved++;
+    else if(a.status==='needs_revision') revision++;
+    if(a.verification){
+      var v=a.verification;
+      if(v.feedbackMetrics){totalAccuracy+=v.feedbackMetrics.findingAccuracyRate||0;count++;}
+    }
+  });
+  return{total,pending,approved,revision,
+    approvalRate:total>0?Math.round(approved/Math.max(1,approved+revision)*100):0,
+    avgAccuracy:count>0?Math.round(totalAccuracy/count*100):null};
+}
+
+function calcDomainInsights(assessments){
+  var deltas={};
+  DOMAINS.forEach(function(d){deltas[d.id]={sum:0,count:0};});
+  assessments.forEach(function(a){
+    if(!a.verification) return;
+    DOMAINS.forEach(function(d){
+      var orig=(a.analysis.domainScores||{})[d.id]||0;
+      var adj=(a.verification.domainVerifications||{})[d.id];
+      if(adj!=null&&adj.adjustedScore!=null){
+        deltas[d.id].sum+=adj.adjustedScore-orig;
+        deltas[d.id].count++;
+      }
+    });
+  });
+  return deltas;
+}
+
+// ── Feedback export ──────────────────────────────────────────────────────────
+function exportFeedback(){
+  var reviewed=state.assessments.filter(function(a){return a.verification;});
+  if(!reviewed.length){alert('No reviewed assessments to export yet.');return;}
+  var blob=new Blob([JSON.stringify(reviewed,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;
+  a.download='MontroLabs_HITL_Feedback_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+}
+
+function clearAll(){
+  if(!confirm('Clear all assessments from the queue? This cannot be undone.'))return;
+  localStorage.removeItem('montrolabs_queue');
+  state.assessments=[];render();
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+
+function goQueue(){showView("queue");}
+function showView(v){state.view=v;render();}
+
+// ── CALIBRATION ENGINE ───────────────────────────────────────────────────────
+function analyzeFeedback(){
+  var reviewed=state.assessments.filter(function(a){return a.verification&&a.verification.feedbackMetrics;});
+  if(!reviewed.length) return null;
+
+  // Domain bias
+  var domainStats={};
+  DOMAINS.forEach(function(d){
+    domainStats[d.id]={deltas:[],confirmed:0,partial:0,incorrect:0,missed:0,total:0};
+  });
+  // Standards miss tracking
+  var standardsMissed={};
+
+  reviewed.forEach(function(a){
+    var v=a.verification;
+    var fm=v.feedbackMetrics||{};
+    // Domain deltas
+    DOMAINS.forEach(function(d){
+      var dd=(fm.domainDeltas||{})[d.id];
+      if(dd) domainStats[d.id].deltas.push(dd.delta||0);
+    });
+    // Finding verdicts per domain
+    DOMAINS.forEach(function(d){
+      var dv=(v.domainVerifications||{})[d.id]||{};
+      Object.values(dv.findingVerdicts||{}).forEach(function(verdict){
+        domainStats[d.id].total++;
+        if(verdict==='confirmed') domainStats[d.id].confirmed++;
+        else if(verdict==='partial') domainStats[d.id].partial++;
+        else if(verdict==='incorrect') domainStats[d.id].incorrect++;
+      });
+      domainStats[d.id].missed+=(dv.missedFindings||[]).length;
+      // Track missed standards from checklist
+      (dv.missedFindings||[]).forEach(function(mf){
+        var std=mf.standard||'Unknown';
+        standardsMissed[std]=(standardsMissed[std]||0)+1;
+      });
+    });
+  });
+
+  // Calculate averages
+  var domainBias={};
+  DOMAINS.forEach(function(d){
+    var deltas=domainStats[d.id].deltas;
+    var avg=deltas.length?deltas.reduce(function(a,b){return a+b;},0)/deltas.length:0;
+    var total=domainStats[d.id].total;
+    var acc=total>0?(domainStats[d.id].confirmed+domainStats[d.id].partial*0.5)/total:null;
+    domainBias[d.id]={avgDelta:avg,accuracy:acc,missCount:domainStats[d.id].missed,sampleSize:deltas.length};
+  });
+
+  return {domainBias:domainBias,standardsMissed:standardsMissed,reviewCount:reviewed.length,reviewed:reviewed};
+}
+
+function generatePromptUpdate(analysis){
+  if(!analysis) return '';
+  var lines=[];
+  lines.push('// ── CALIBRATION UPDATE — Generated '+new Date().toLocaleDateString()+' from '+analysis.reviewCount+' verified assessments ──');
+  lines.push('');
+  lines.push('SCORING CALIBRATION (human-verified corrections):');
+
+  var biasNotes=[];
+  DOMAINS.forEach(function(d){
+    var b=analysis.domainBias[d.id];
+    if(!b||b.sampleSize===0) return;
+    var avg=b.avgDelta;
+    if(Math.abs(avg)>=1.0){
+      var dir=avg>0?'INCREASE':'DECREASE';
+      biasNotes.push('- '+d.label+': '+dir+' scores by ~'+Math.abs(avg).toFixed(1)+' pts avg (AI was '+(avg<0?'over':'under')+'scoring across '+b.sampleSize+' reviews)');
+    }
+    if(b.accuracy!=null&&b.accuracy<0.7){
+      biasNotes.push('- '+d.label+': Only '+Math.round(b.accuracy*100)+'% finding accuracy — needs more specific detection criteria');
+    }
+    if(b.missCount>0){
+      biasNotes.push('- '+d.label+': '+b.missCount+' missed findings added by reviewer — expand checklist for this domain');
+    }
+  });
+
+  if(biasNotes.length){
+    biasNotes.forEach(function(n){lines.push(n);});
+  } else {
+    lines.push('- No significant systematic bias detected. Scores are well-calibrated.');
+  }
+
+  lines.push('');
+  lines.push('COMMONLY MISSED STANDARDS (add explicit checks for these):');
+  var missedEntries=Object.entries(analysis.standardsMissed).sort(function(a,b){return b[1]-a[1];});
+  if(missedEntries.length){
+    missedEntries.slice(0,5).forEach(function(e){
+      lines.push('- '+e[0]+' (missed '+e[1]+' time'+(e[1]>1?'s':'')+' — add as explicit evaluation criteria)');
+    });
+  } else {
+    lines.push('- No systematic standard misses detected yet.');
+  }
+
+  lines.push('');
+  lines.push('UPDATED DEDUCTION GUIDANCE:');
+  DOMAINS.forEach(function(d){
+    var b=analysis.domainBias[d.id];
+    if(!b||Math.abs(b.avgDelta)<1.0) return;
+    var adj=b.avgDelta>0?'Add ':'Subtract ';
+    lines.push('- '+d.label+': '+adj+Math.abs(b.avgDelta).toFixed(1)+' pts from your initial score before finalizing');
+  });
+
+  lines.push('');
+  lines.push('FEW-SHOT CALIBRATION EXAMPLE (paste into system prompt):');
+  var bestReview=analysis.reviewed.find(function(a){
+    var fm=a.verification.feedbackMetrics||{};
+    return fm.findingAccuracyRate!=null&&fm.findingAccuracyRate<0.85&&Math.abs(fm.scoreDelta||0)>=3;
+  });
+  if(bestReview){
+    var fm=bestReview.verification.feedbackMetrics||{};
+    var ci=bestReview.clientInfo||{};
+    lines.push('Example: '+( ci.propertyType||'property')+' — AI scored '+fm.originalScore+', human verified '+fm.adjustedScore);
+    lines.push('Key corrections:');
+    DOMAINS.forEach(function(d){
+      var dd=(fm.domainDeltas||{})[d.id];
+      if(dd&&Math.abs(dd.delta)>=2){
+        lines.push('  '+d.label+': '+dd.original+' → '+dd.adjusted+' ('+(dd.delta>0?'+':'')+dd.delta+')');
+      }
+    });
+    lines.push('Use this as a reference case when scoring similar properties.');
+  } else {
+    lines.push('Accumulate more reviews to generate a calibration example.');
+  }
+
+  lines.push('');
+  lines.push('FINE-TUNING READINESS:');
+  lines.push('- Current verified assessments: '+analysis.reviewCount);
+  lines.push('- Minimum for Nemotron fine-tuning: 50 assessments');
+  lines.push('- Recommended for reliable fine-tuning: 100+ assessments');
+  lines.push('- Run exportFeedback() to download training data in HITL JSON format');
+  lines.push('- Convert to NeMo format: see montro_finetune_converter.py');
+
+  return lines.join('\n');
+}
+
+function renderCalibration(){
+  var analysis=analyzeFeedback();
+  var h='<div class="page">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">';
+  h+='<div><h1 style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px">Prompt Calibration Center</h1>';
+  h+='<p style="font-size:13px;color:var(--gray)">AI model improvement pipeline — from review data to updated scoring prompt</p></div>';
+  h+='<button class="back-btn" onclick="showView(\'queue\')">&#8592; Queue</button></div>';
+
+  // Pipeline diagram
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow)">';
+  h+='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:14px">How the Feedback Loop Works</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">';
+  var steps=[
+    {n:'1',title:'You Review',sub:'Domain checklist + finding verdicts',c:'#3578C4',icon:'✅'},
+    {n:'2',title:'Patterns Detected',sub:'Systematic bias per domain identified',c:'#B45309',icon:'📊'},
+    {n:'3',title:'Prompt Updated',sub:'Scoring rubric recalibrated via this tool',c:'#0E7C5A',icon:'⚙️'},
+    {n:'4',title:'Nemotron Fine-tune',sub:'After 50+ reviews via NVIDIA NeMo',c:'#C05621',icon:'🧠'},
+  ];
+  steps.forEach(function(s,i){
+    h+='<div style="text-align:center;padding:12px 8px;position:relative">';
+    h+='<div style="width:44px;height:44px;border-radius:50%;background:'+s.c+'18;border:2px solid '+s.c+'44;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px">'+s.icon+'</div>';
+    h+='<div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px">'+s.title+'</div>';
+    h+='<div style="font-size:11px;color:var(--gray)">'+s.sub+'</div>';
+    if(i<steps.length-1) h+='<div style="position:absolute;right:-8px;top:28px;font-size:18px;color:var(--border)">→</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="margin-top:14px;padding:10px 14px;background:var(--blue-tint);border-radius:7px;font-size:12px;color:var(--navy)">';
+  h+='<strong>Key insight:</strong> Claude Sonnet 4.6 cannot be fine-tuned — improvements happen via the <strong>system prompt</strong>. Nemotron (NVIDIA) <em>can</em> be fine-tuned. Both benefit from your reviews right now via calibrated prompt updates.';
+  h+='</div></div>';
+
+  if(!analysis){
+    h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:40px;text-align:center;box-shadow:var(--shadow)">';
+    h+='<div style="font-size:32px;margin-bottom:12px">📋</div>';
+    h+='<div style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px">No reviews yet</div>';
+    h+='<p style="font-size:13px;color:var(--gray)">Complete at least one assessment review to generate calibration data.</p></div>';
+    h+='</div>';
+    return h;
+  }
+
+  // Domain accuracy table
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">';
+  h+='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:12px">Domain Score Bias ('+analysis.reviewCount+' reviews)</div>';
+  DOMAINS.forEach(function(d){
+    var b=analysis.domainBias[d.id];
+    var avg=b&&b.sampleSize>0?b.avgDelta:null;
+    var color=avg==null?'var(--gray-light)':avg>0?C.success:avg<0?C.danger:C.gray;
+    var label=avg==null?'No data':(avg>0?'+':'')+avg.toFixed(1)+' avg';
+    var severity=avg==null?'':Math.abs(avg)>=2?'⚠ High bias':Math.abs(avg)>=1?'↕ Moderate':'✓ Calibrated';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">';
+    h+='<span style="font-size:12px;font-weight:500;color:var(--navy);min-width:130px">'+esc(d.label)+'</span>';
+    h+='<span style="font-size:12px;font-weight:700;color:'+color+'">'+label+'</span>';
+    h+='<span style="font-size:10px;color:'+color+';margin-left:auto">'+severity+'</span>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">';
+  h+='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:12px">Fine-tuning Readiness</div>';
+  var pct=Math.min(analysis.reviewCount/50*100,100);
+  h+='<div style="font-size:28px;font-weight:700;color:var(--navy);margin-bottom:4px">'+analysis.reviewCount+' <span style="font-size:14px;color:var(--gray)">/ 50 minimum</span></div>';
+  h+='<div style="height:8px;background:var(--border-light);border-radius:999px;margin-bottom:10px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(pct>=100?C.success:pct>=50?C.warn:C.blue)+';border-radius:999px"></div></div>';
+  h+='<div style="font-size:12px;color:var(--gray);line-height:1.7">';
+  h+='<strong>Now → 10 reviews:</strong> Prompt calibration (this tool)<br>';
+  h+='<strong>10 → 50 reviews:</strong> Add few-shot examples to prompt<br>';
+  h+='<strong>50+ reviews:</strong> Nemotron fine-tuning via NVIDIA NeMo<br>';
+  h+='<strong>100+ reviews:</strong> Full domain-specific vision model';
+  h+='</div>';
+  h+='<button onclick="exportFeedback()" style="margin-top:12px;width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;font-weight:500;color:var(--gray);cursor:pointer">Export Training Data (HITL JSON)</button>';
+  h+='</div></div>';
+
+  // Generated prompt update
+  var promptUpdate=generatePromptUpdate(analysis);
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:16px">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  h+='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light)">Generated Prompt Calibration Update</div>';
+  h+='<button onclick="copyPrompt()" style="font-size:12px;padding:6px 14px;border-radius:6px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-family:inherit;font-weight:500">Copy to Clipboard</button></div>';
+  h+='<div style="background:#0D1520;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;color:#C9D4E0;white-space:pre-wrap;max-height:320px;overflow-y:auto;line-height:1.7" id="prompt-output">'+esc(promptUpdate)+'</div>';
+  h+='<div style="margin-top:10px;padding:10px 12px;background:var(--warn-tint);border-radius:7px;font-size:12px;color:var(--warn)">';
+  h+='<strong>How to apply:</strong> Copy this text. Open <code>montro_assessment_v2.html</code> in a text editor. Find the <code>const sys=</code> variable in the script block. Paste the calibration section at the bottom of the system prompt, before the final "Return JSON only." instruction.';
+  h+='</div></div>';
+
+  // NeMo fine-tuning guide
+  h+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">';
+  h+='<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:12px">Nemotron Fine-tuning Path (50+ reviews)</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+  [
+    {step:'Step 1',title:'Export HITL JSON',desc:'Click "Export Training Data" above. This produces the raw verification records.',code:'montrolabs_hitl_feedback.json'},
+    {step:'Step 2',title:'Convert to NeMo Format',desc:'Run the converter script to produce instruction-response pairs for fine-tuning.',code:'python3 montro_finetune_converter.py'},
+    {step:'Step 3',title:'Submit to NeMo Customizer',desc:'Upload to NVIDIA NeMo Customizer API. Fine-tune llama-3.2-90b-vision-instruct.',code:'nemo_customizer.submit(dataset)'},
+  ].forEach(function(s){
+    h+='<div style="background:var(--bg);border-radius:8px;padding:12px">';
+    h+='<div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.08em;margin-bottom:4px">'+s.step+'</div>';
+    h+='<div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">'+s.title+'</div>';
+    h+='<div style="font-size:11px;color:var(--gray);margin-bottom:8px">'+s.desc+'</div>';
+    h+='<div style="background:#0D1520;border-radius:5px;padding:6px 8px;font-family:monospace;font-size:10px;color:#5B9BD5">'+esc(s.code)+'</div></div>';
+  });
+  h+='</div></div>';
+
+  h+='</div>';
+  return h;
+}
+
+function copyPrompt(){
+  var el=document.getElementById('prompt-output');
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function(){
+    var btn=document.querySelector('[onclick="copyPrompt()"]');
+    if(btn){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy to Clipboard';},2000);}
+  });
+}
+
+
+function render(){
+  state.assessments=loadAssessments();
+  var app=document.getElementById('app');
+  if(state.view==='calibration') app.innerHTML=renderCalibration();
+  else if(state.view==='queue') app.innerHTML=renderQueue();
+  else if(state.view==='review') app.innerHTML=renderReview();
+  else if(state.view==='confirm') app.innerHTML=renderConfirm();
+}
+
+// ── QUEUE VIEW ───────────────────────────────────────────────────────────────
+function renderQueue(){
+  var all=state.assessments;
+  var stats=calcStats(all);
+  var insights=calcDomainInsights(all);
+  var filtered=all.filter(function(a){
+    if(state.filter==='all') return true;
+    if(state.filter==='pending') return a.status==='pending_review'||a.status==='in_review';
+    if(state.filter==='approved') return a.status==='approved';
+    if(state.filter==='revision') return a.status==='needs_revision';
+    return true;
+  });
+
+  var h='<div class="page">';
+
+  // Stats
+  h+='<div class="stats-bar">';
+  h+='<div class="stat-card"><div class="stat-val">'+stats.total+'</div><div class="stat-lbl">Total Assessments</div></div>';
+  h+='<div class="stat-card"><div class="stat-val" style="color:var(--warn)">'+stats.pending+'</div><div class="stat-lbl">Pending Review</div></div>';
+  h+='<div class="stat-card"><div class="stat-val" style="color:var(--success)">'+stats.approvalRate+'%</div><div class="stat-lbl">Approval Rate</div></div>';
+  h+='<div class="stat-card"><div class="stat-val" style="color:var(--blue)">'+(stats.avgAccuracy!=null?stats.avgAccuracy+'%':'—')+'</div><div class="stat-lbl">AI Finding Accuracy</div></div>';
+  h+='</div>';
+
+  // Domain insights (only show if we have reviewed assessments)
+  var reviewed=all.filter(function(a){return a.verification;});
+  if(reviewed.length>0){
+    h+='<div class="insights-card"><div class="insights-title">AI Performance Insights — Domain Score Accuracy (avg delta: human vs AI)</div>';
+    DOMAINS.forEach(function(d){
+      var ins=insights[d.id];
+      if(!ins||ins.count===0){
+        h+='<div class="insight-row"><span class="insight-domain">'+d.label+'</span><div class="insight-bar-wrap"></div><span class="insight-val" style="color:var(--gray-light)">No data</span></div>';
+        return;
+      }
+      var avg=ins.sum/ins.count;
+      var abs=Math.abs(avg);
+      var pct=Math.min(abs/d.max*100*3,100);
+      var color=avg>0?C.success:avg<0?C.danger:C.gray;
+      var label=(avg>0?'+':'')+avg.toFixed(1)+' avg';
+      h+='<div class="insight-row"><span class="insight-domain">'+esc(d.label)+'</span><div class="insight-bar-wrap"><div class="insight-bar" style="width:'+pct+'%;background:'+color+'"></div></div><span class="insight-val" style="color:'+color+'">'+label+'</span></div>';
+    });
+    h+='</div>';
+  }
+
+  // Filters
+  h+='<div class="filter-bar"><span class="filter-lbl">Show:</span>';
+  [{id:'all',lbl:'All ('+stats.total+')'},{id:'pending',lbl:'Pending ('+stats.pending+')'},{id:'approved',lbl:'Approved ('+stats.approved+')'},{id:'revision',lbl:'Needs Revision ('+stats.revision+')'}].forEach(function(f){
+    h+='<button class="filter-btn'+(state.filter===f.id?' active':'')+'" onclick="setFilter(\''+f.id+'\')">'+f.lbl+'</button>';
+  });
+  h+='</div>';
+
+  // Cards
+  if(!filtered.length){
+    h+='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No assessments here</div><p style="font-size:13px">Run an assessment in the main portal and it will appear in this queue automatically.</p></div>';
+  } else {
+    filtered.forEach(function(a){
+      var score=a.analysis&&a.analysis.overallScore||0;
+      var g=gradeOf(score);
+      var statusClass={pending_review:'status-pending',in_review:'status-review',approved:'status-approved',needs_revision:'status-revision'}[a.status]||'status-pending';
+      var statusLbl={pending_review:'Pending Review',in_review:'In Review',approved:'Approved',needs_revision:'Needs Revision'}[a.status]||'Pending';
+      var thumb=a.thumbnails&&a.thumbnails[0];
+      h+='<div class="queue-card">';
+      if(thumb) h+='<img class="qc-thumb" src="'+thumb+'" alt="property">';
+      else h+='<div class="qc-thumb-placeholder">🏢</div>';
+      h+='<div class="qc-info"><div class="qc-id">'+esc(a.id)+'</div>';
+      h+='<div class="qc-name">'+esc((a.clientInfo&&a.clientInfo.propertyName)||'Unknown Property')+'</div>';
+      h+='<div class="qc-meta">'+esc((a.clientInfo&&a.clientInfo.clientName)||'')+(a.clientInfo&&a.clientInfo.propertyType?' · '+(a.clientInfo.propertyType||'').replace(/_/g,' '):'')+(a.submittedAt?' · '+new Date(a.submittedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'')+'</div></div>';
+      h+='<div class="qc-score"><div class="qc-score-num" style="color:'+g.c+'">'+score+'</div><div class="qc-score-grade" style="color:'+g.c+'">'+g.g+' — '+g.label+'</div></div>';
+      h+='<div class="qc-status"><span class="status-pill '+statusClass+'">'+statusLbl+'</span></div>';
+      h+='<div class="qc-actions">';
+      if(a.status==='pending_review'||a.status==='in_review'){
+        h+='<button class="btn-review" onclick="startReview(\''+a.id+'\')">Review →</button>';
+      } else {
+        h+='<button class="btn-view" onclick="viewReview(\''+a.id+'\')">View</button>';
+      }
+      h+='</div></div>';
+    });
+  }
+  h+='</div>';
+  return h;
+}
+
+function setFilter(f){state.filter=f;render();}
+
+// ── START REVIEW ─────────────────────────────────────────────────────────────
+function startReview(id){
+  var a=getAssessment(id);
+  if(!a) return;
+  state.currentId=id;
+  state.currentStep=0;
+  state.review=initReview(a);
+  state.showMissedForm={};
+  // Mark as in_review
+  a.status='in_review';
+  saveAssessments(state.assessments);
+  state.view='review';
+  render();
+}
+
+function viewReview(id){
+  var a=getAssessment(id);
+  if(!a||!a.verification) return startReview(id);
+  state.currentId=id;
+  state.currentStep=7;
+  state.review=a.verification;
+  state.view='review';
+  render();
+}
+
+// ── REVIEW VIEW ──────────────────────────────────────────────────────────────
+function renderReview(){
+  var a=getAssessment(state.currentId);
+  if(!a) return '<div style="padding:20px;color:red">Assessment not found</div>';
+  var score=a.analysis&&a.analysis.overallScore||0;
+  var g=gradeOf(score);
+
+  var h='';
+
+  // Sticky review header
+  h+='<div class="review-header">';
+  h+='<button class="back-btn" onclick="backToQueue()">← Queue</button>';
+  h+='<div class="review-client"><div class="review-client-name">'+esc((a.clientInfo&&a.clientInfo.propertyName)||'Property')+'</div>';
+  h+='<div class="review-client-meta">'+esc((a.clientInfo&&a.clientInfo.clientName)||'')+' · '+esc(a.id)+'</div></div>';
+  h+='<div class="review-score-badge" style="background:'+g.c+'18;border:1px solid '+g.c+'44">';
+  h+='<div class="review-score-num" style="color:'+g.c+'">'+score+'/100</div>';
+  h+='<div class="review-score-grade" style="color:'+g.c+'">Grade '+g.g+'</div></div></div>';
+
+  // Step progress
+  h+='<div class="step-progress">';
+  var steps=DOMAINS.map(function(d,i){return{label:d.label.split(' ')[0],i:i};});
+  steps.push({label:'Overall',i:7});
+  steps.forEach(function(s){
+    var done=s.i<state.currentStep;
+    var active=s.i===state.currentStep;
+    h+='<div class="step-item'+(done?' done':'')+(active?' active':'')+'" onclick="goStep('+s.i+')">';
+    h+='<div class="step-dot">'+(done?'✓':s.i===7?'★':(s.i+1))+'</div>';
+    h+='<div class="step-lbl">'+esc(s.label)+'</div></div>';
+  });
+  h+='</div>';
+
+  h+='<div class="review-body">';
+  if(state.currentStep<7){
+    h+=renderDomainStep(a);
+  } else {
+    h+=renderOverallStep(a);
+  }
+  h+='</div>';
+
+  return h;
+}
+
+function renderDomainStep(assessment){
+  var domain=DOMAINS[state.currentStep];
+  var dv=state.review.domainVerifications[domain.id];
+  var aiScore=(assessment.analysis.domainScores||{})[domain.id]||0;
+  var g=gradeOf(Math.round(aiScore/domain.max*100));
+  var checklist=CHECKLISTS[domain.id]||[];
+
+  // Findings for this domain
+  var allFindings=assessment.analysis.findings||[];
+  var domainFindings=allFindings.filter(function(f){return f.domain===domain.id;});
+
+  var h='';
+  // Domain header
+  h+='<div style="margin-bottom:16px"><h2 style="font-size:16px;font-weight:700;color:var(--navy)">Domain '+( state.currentStep+1)+': '+domain.label+'</h2>';
+  h+='<p style="font-size:12px;color:var(--gray);margin-top:3px">Review the AI\'s assessment against '+checklist.length+' national standards criteria</p></div>';
+
+  h+='<div class="domain-panel">';
+
+  // LEFT: Standards Checklist
+  h+='<div class="panel-card"><div class="panel-title">Standards Verification Checklist</div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div class="ai-score-num" style="color:'+g.c+'">'+aiScore+'</div><span style="color:var(--gray);font-size:13px">/ '+domain.max+' pts &nbsp;·&nbsp; AI Score</span></div>';
+  checklist.forEach(function(item){
+    var checked=dv.standardsChecked[item.id];
+    h+='<div class="checklist-item'+(checked?' checked':'')+'" onclick="toggleCheck(\''+domain.id+'\',\''+item.id+'\')">';
+    h+='<input type="checkbox"'+(checked?' checked':'')+' onclick="event.stopPropagation();toggleCheck(\''+domain.id+'\',\''+item.id+'\')">';
+    h+='<div><div class="checklist-text">'+esc(item.text)+'</div><div class="checklist-std">'+esc(item.std)+'</div></div></div>';
+  });
+
+  // Checklist progress
+  var checkedCount=Object.values(dv.standardsChecked).filter(Boolean).length;
+  h+='<div style="margin-top:10px;font-size:11px;color:var(--gray-light)">'+checkedCount+' / '+checklist.length+' criteria verified</div>';
+
+  // Adjusted score
+  h+='<div class="adj-score-row">';
+  h+='<span class="adj-score-lbl">Your adjusted score</span>';
+  h+='<input class="adj-score-input" type="number" min="0" max="'+domain.max+'" value="'+dv.adjustedScore+'" oninput="setAdjScore(\''+domain.id+'\',this.value)" id="adj-'+domain.id+'">';
+  h+='<span class="adj-score-max">/ '+domain.max+'</span></div>';
+
+  h+='</div>';
+
+  // RIGHT: AI Findings
+  h+='<div class="panel-card"><div class="panel-title">AI Findings — Verify Each One</div>';
+
+  if(!domainFindings.length){
+    h+='<div style="color:var(--gray-light);font-size:12px;padding:16px 0;text-align:center">No findings in this domain<br><span style="font-size:11px">Add missed findings below if applicable</span></div>';
+  }
+
+  domainFindings.forEach(function(f){
+    var fid=f.id||f.finding.substring(0,20);
+    var verdict=dv.findingVerdicts[fid];
+    var note=dv.findingNotes[fid]||'';
+    var sc=sevColor(f.severity);var bg=sevBg(f.severity);
+    h+='<div class="finding-review" style="border-color:'+sc+';background:'+bg+'">';
+    h+='<div class="finding-rev-top"><span class="finding-rev-sev" style="background:'+sc+'22;color:'+sc+'">'+esc((f.severity||'').toUpperCase())+'</span><span class="finding-rev-std">'+esc(f.standard||'')+'</span></div>';
+    h+='<div class="finding-rev-txt">'+esc(f.finding||'')+'</div>';
+    h+='<div class="finding-rev-rec">→ '+esc(f.recommendation||'')+'</div>';
+    h+='<div class="verdict-btns">';
+    ['confirmed','partial','incorrect'].forEach(function(v){
+      var labels={confirmed:'✓ Confirmed',partial:'~ Partial',incorrect:'✗ Incorrect'};
+      var active=verdict===v;
+      h+='<button class="verdict-btn'+(active?' '+v:'')+'" onclick="setVerdict(\''+domain.id+'\',\''+fid+'\',\''+v+'\')" style="'+(active?'font-weight:700':'')+'">'+labels[v]+'</button>';
+    });
+    h+='</div>';
+    h+='<input class="verdict-note" placeholder="Optional note…" value="'+esc(note)+'" oninput="setVerdictNote(\''+domain.id+'\',\''+fid+'\',this.value)">';
+    h+='</div>';
+  });
+
+  // Missed findings
+  var missed=dv.missedFindings||[];
+  missed.forEach(function(mf,mi){
+    h+='<div class="missed-item"><div class="missed-item-txt"><strong style="color:var(--orange)">Missed:</strong> '+esc(mf.finding)+' <span style="opacity:.7">('+esc(mf.severity)+')</span></div>';
+    h+='<button class="rm-missed" onclick="removeMissed(\''+domain.id+'\','+mi+')">×</button></div>';
+  });
+
+  if(state.showMissedForm[domain.id]){
+    h+='<div class="missed-finding-form">';
+    h+='<div style="font-size:11px;font-weight:600;color:var(--orange);margin-bottom:8px">Add Missed Finding</div>';
+    h+='<textarea id="mf-finding" placeholder="Describe the security finding the AI missed…" rows="2"></textarea>';
+    h+='<input id="mf-standard" placeholder="Standard violated (e.g. CPTED P1, NFPA 730 §7)">';
+    h+='<select id="mf-severity"><option value="">Severity…</option><option value="critical">Critical</option><option value="high">High</option><option value="moderate">Moderate</option><option value="low">Low</option></select>';
+    h+='<input id="mf-rec" placeholder="Recommendation…">';
+    h+='<div style="display:flex;gap:6px">';
+    h+='<button style="flex:1;padding:6px;border-radius:6px;background:var(--orange);color:#fff;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600" onclick="saveMissed(\''+domain.id+'\')">Add Finding</button>';
+    h+='<button style="flex:1;padding:6px;border-radius:6px;background:var(--bg);color:var(--gray);border:1px solid var(--border);cursor:pointer;font-family:inherit;font-size:12px" onclick="toggleMissedForm(\''+domain.id+'\')">Cancel</button>';
+    h+='</div></div>';
+  } else {
+    h+='<button class="add-finding-btn" onclick="toggleMissedForm(\''+domain.id+'\')">+ Add finding the AI missed</button>';
+  }
+
+  h+='</div></div>'; // close panel-card and domain-panel
+
+  // Nav
+  h+='<div class="review-nav">';
+  if(state.currentStep>0){
+    h+='<button class="nav-btn" onclick="goStep('+(state.currentStep-1)+')">← Previous</button>';
+  } else {
+    h+='<div></div>';
+  }
+  var allVerified=domainFindings.every(function(f){var fid=f.id||f.finding.substring(0,20);return dv.findingVerdicts[fid];});
+  h+='<div style="font-size:11px;color:var(--gray-light)">'+checkedCount+'/'+checklist.length+' standards · '+Object.keys(dv.findingVerdicts).length+'/'+domainFindings.length+' findings verified</div>';
+  h+='<button class="nav-btn nav-btn-primary" onclick="goStep('+(state.currentStep+1)+')">'+( state.currentStep===6?'Overall Review →':'Next Domain →')+'</button>';
+  h+='</div>';
+
+  return h;
+}
+
+function renderOverallStep(assessment){
+  var rev=state.review;
+  var origScore=assessment.analysis&&assessment.analysis.overallScore||0;
+  var g=gradeOf(rev.adjustedTotalScore||origScore);
+  var adjG=gradeOf(rev.adjustedTotalScore||origScore);
+
+  // Calculate verification summary
+  var totalFindings=(assessment.analysis.findings||[]).length;
+  var confirmed=0,partial=0,incorrect=0,missed=0;
+  DOMAINS.forEach(function(d){
+    var dv=rev.domainVerifications[d.id]||{};
+    Object.values(dv.findingVerdicts||{}).forEach(function(v){
+      if(v==='confirmed') confirmed++;
+      else if(v==='partial') partial++;
+      else if(v==='incorrect') incorrect++;
+    });
+    missed+=(dv.missedFindings||[]).length;
+  });
+  var verdicted=confirmed+partial+incorrect;
+  var accuracyRate=verdicted>0?Math.round((confirmed+partial*0.5)/verdicted*100):null;
+
+  // Recalculate adjusted total from domain adjustments
+  var adjTotal=0;
+  DOMAINS.forEach(function(d){
+    var dv=rev.domainVerifications[d.id]||{};
+    adjTotal+=parseInt(dv.adjustedScore||0,10);
+  });
+  if(rev.adjustedTotalScore===(assessment.analysis&&assessment.analysis.overallScore||0)){
+    rev.adjustedTotalScore=adjTotal;
+  }
+
+  var h='<h2 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">Overall Review & Approval</h2>';
+  h+='<p style="font-size:12px;color:var(--gray);margin-bottom:16px">Review the verification summary, adjust the total score if needed, and approve or flag for revision.</p>';
+
+  h+='<div class="overall-grid">';
+
+  // Left: Score summary + approval
+  h+='<div>';
+  h+='<div class="panel-card" style="margin-bottom:14px"><div class="panel-title">Domain Score Summary</div>';
+  h+='<table class="summary-table">';
+  DOMAINS.forEach(function(d){
+    var orig=(assessment.analysis.domainScores||{})[d.id]||0;
+    var dv=rev.domainVerifications[d.id]||{};
+    var adj=parseInt(dv.adjustedScore||orig,10);
+    var delta=adj-orig;
+    var dc=delta>0?'delta-pos':delta<0?'delta-neg':'delta-zero';
+    h+='<tr><td>'+esc(d.label)+'</td><td>'+orig+' → <strong>'+adj+'</strong>/'+d.max+' <span class="'+dc+'">'+(delta>0?'+':'')+delta+'</span></td></tr>';
+  });
+  h+='</table>';
+  h+='<div class="total-score-row">';
+  h+='<span class="total-score-lbl">Verified Total Score</span>';
+  h+='<span class="total-score-orig">AI: '+origScore+'</span>';
+  h+='<input type="number" min="0" max="100" value="'+rev.adjustedTotalScore+'" oninput="setAdjTotal(this.value)" style="width:64px;text-align:center;font-size:20px;font-weight:700;border:2px solid var(--border);border-radius:7px;padding:5px;font-family:inherit;color:'+adjG.c+'">';
+  h+='<span style="font-size:13px;color:var(--gray)">/100 · Grade '+adjG.g+'</span>';
+  h+='</div></div>';
+
+  h+='<div class="panel-card"><div class="panel-title">Approval Decision</div>';
+  h+='<div class="approval-choice">';
+  h+='<div class="approval-opt'+(rev.approvalStatus==='approved'?' selected-approve':'')+'" onclick="setApproval(\'approved\')">';
+  h+='<div class="approval-icon">✅</div><div class="approval-label" style="color:var(--success)">Approve</div><div class="approval-sub">Ready for client delivery</div></div>';
+  h+='<div class="approval-opt'+(rev.approvalStatus==='needs_revision'?' selected-revision':'')+'" onclick="setApproval(\'needs_revision\')">';
+  h+='<div class="approval-icon">🔄</div><div class="approval-label" style="color:var(--danger)">Needs Revision</div><div class="approval-sub">AI findings require correction</div></div>';
+  h+='</div></div></div>';
+
+  // Right: Verification metrics + notes
+  h+='<div>';
+  h+='<div class="panel-card" style="margin-bottom:14px"><div class="panel-title">Verification Metrics</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+  [{v:confirmed,c:C.success,l:'Confirmed'},{v:partial,c:C.warn,l:'Partial'},{v:incorrect,c:C.danger,l:'Incorrect'},{v:missed,c:C.orange,l:'Missed'}].forEach(function(m){
+    h+='<div style="background:var(--bg);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:'+m.c+'">'+m.v+'</div><div style="font-size:10px;color:var(--gray);margin-top:2px">'+m.l+'</div></div>';
+  });
+  h+='</div>';
+  if(accuracyRate!=null){
+    h+='<div style="background:var(--blue-tint);border-radius:8px;padding:10px;text-align:center">';
+    h+='<div style="font-size:26px;font-weight:700;color:var(--blue)">'+accuracyRate+'%</div>';
+    h+='<div style="font-size:11px;color:var(--gray)">AI Finding Accuracy Rate</div>';
+    h+='<div style="font-size:10px;color:var(--gray-light);margin-top:3px">confirmed + 0.5×partial / total verified</div></div>';
+  }
+  h+='</div>';
+
+  h+='<div class="panel-card"><div class="panel-title">Assessor Notes</div>';
+  h+='<textarea class="notes-ta" rows="5" placeholder="Overall assessment notes, context for the client, or notes for AI improvement…" oninput="setNotes(this.value)">'+esc(rev.overallNotes||'')+'</textarea>';
+  h+='</div></div>';
+  h+='</div>'; // close overall-grid
+
+  // Submit
+  h+='<button class="submit-btn" onclick="submitReview()">Submit Verification & Update Queue</button>';
+
+  // Nav
+  h+='<div class="review-nav">';
+  h+='<button class="nav-btn" onclick="goStep(6)">← Domain 7</button>';
+  h+='<div></div></div>';
+
+  return h;
+}
+
+function renderConfirm(){
+  var a=getAssessment(state.currentId);
+  if(!a||!a.verification) return renderQueue();
+  var v=a.verification;
+  var fm=v.feedbackMetrics||{};
+  var g=gradeOf(v.adjustedTotalScore||0);
+  var origG=gradeOf((a.analysis&&a.analysis.overallScore)||0);
+  var delta=(v.adjustedTotalScore||0)-(a.analysis&&a.analysis.overallScore||0);
+
+  return '<div class="page"><div class="confirm-card">' +
+    '<div class="confirm-icon">'+( v.approvalStatus==='approved'?'✅':'🔄')+'</div>' +
+    '<div class="confirm-title">'+( v.approvalStatus==='approved'?'Assessment Approved':'Flagged for Revision')+'</div>' +
+    '<div class="confirm-sub">'+esc((a.clientInfo&&a.clientInfo.propertyName)||'Property')+' · '+esc(a.id)+'</div>' +
+    '<div class="metrics-grid">' +
+    '<div class="metric-box"><div class="metric-val" style="color:var(--navy)">'+( a.analysis&&a.analysis.overallScore||0)+' → <span style="color:'+g.c+'">'+( v.adjustedTotalScore||0)+'</span></div><div class="metric-lbl">Score Adjustment</div></div>' +
+    '<div class="metric-box"><div class="metric-val" style="color:'+(fm.findingAccuracyRate>=0.8?C.success:fm.findingAccuracyRate>=0.6?C.warn:C.danger)+'">'+( fm.findingAccuracyRate!=null?Math.round(fm.findingAccuracyRate*100)+'%':'—')+'</div><div class="metric-lbl">AI Accuracy</div></div>' +
+    '<div class="metric-box"><div class="metric-val" style="color:var(--orange)">'+( fm.missedFindings||0)+'</div><div class="metric-lbl">Missed Findings Added</div></div>' +
+    '</div>' +
+    '<button class="btn-sm btn-primary" style="padding:10px 28px;font-size:14px;margin-top:8px" onclick="backToQueue()">← Back to Queue</button>' +
+    '</div></div>';
+}
+
+// ── Event handlers ───────────────────────────────────────────────────────────
+function backToQueue(){state.view='queue';render();}
+
+function goStep(n){
+  saveReviewProgress();
+  state.currentStep=Math.max(0,Math.min(7,n));
+  render();
+  window.scrollTo(0,0);
+}
+
+function toggleCheck(domainId, itemId){
+  var dv=state.review.domainVerifications[domainId];
+  dv.standardsChecked[itemId]=!dv.standardsChecked[itemId];
+  saveReviewProgress();
+  render();
+}
+
+function setAdjScore(domainId, val){
+  var domain=DOMAINS.find(function(d){return d.id===domainId;});
+  var max=domain?domain.max:20;
+  state.review.domainVerifications[domainId].adjustedScore=Math.max(0,Math.min(max,parseInt(val,10)||0));
+}
+
+function setVerdict(domainId, findingId, verdict){
+  state.review.domainVerifications[domainId].findingVerdicts[findingId]=verdict;
+  saveReviewProgress();
+  render();
+}
+
+function setVerdictNote(domainId, findingId, note){
+  state.review.domainVerifications[domainId].findingNotes[findingId]=note;
+}
+
+function toggleMissedForm(domainId){
+  state.showMissedForm[domainId]=!state.showMissedForm[domainId];
+  render();
+}
+
+function saveMissed(domainId){
+  var finding=document.getElementById('mf-finding');
+  var std=document.getElementById('mf-standard');
+  var sev=document.getElementById('mf-severity');
+  var rec=document.getElementById('mf-rec');
+  if(!finding||!finding.value.trim()){alert('Please describe the finding.');return;}
+  state.review.domainVerifications[domainId].missedFindings.push({
+    finding:finding.value.trim(),standard:std?std.value.trim():'',
+    severity:sev?sev.value:'moderate',recommendation:rec?rec.value.trim():'',
+    domain:domainId,addedAt:new Date().toISOString()
+  });
+  state.showMissedForm[domainId]=false;
+  saveReviewProgress();
+  render();
+}
+
+function removeMissed(domainId, idx){
+  state.review.domainVerifications[domainId].missedFindings.splice(idx,1);
+  saveReviewProgress();
+  render();
+}
+
+function setApproval(status){
+  state.review.approvalStatus=status;
+  render();
+}
+
+function setNotes(notes){state.review.overallNotes=notes;}
+
+function setAdjTotal(val){
+  state.review.adjustedTotalScore=Math.max(0,Math.min(100,parseInt(val,10)||0));
+}
+
+function saveReviewProgress(){
+  var a=getAssessment(state.currentId);
+  if(!a) return;
+  a.verification=state.review;
+  saveAssessments(state.assessments);
+}
+
+function submitReview(){
+  if(!state.review.approvalStatus){alert('Please select an approval decision before submitting.');return;}
+  var a=getAssessment(state.currentId);
+  if(!a) return;
+
+  // Calculate feedback metrics
+  var confirmed=0,partial=0,incorrect=0,missed=0,totalVerified=0;
+  DOMAINS.forEach(function(d){
+    var dv=state.review.domainVerifications[d.id]||{};
+    Object.values(dv.findingVerdicts||{}).forEach(function(v){
+      totalVerified++;
+      if(v==='confirmed')confirmed++;
+      else if(v==='partial')partial++;
+      else if(v==='incorrect')incorrect++;
+    });
+    missed+=(dv.missedFindings||[]).length;
+  });
+
+  var domainDeltas={};
+  DOMAINS.forEach(function(d){
+    var orig=(a.analysis.domainScores||{})[d.id]||0;
+    var dv=state.review.domainVerifications[d.id]||{};
+    var adj=parseInt(dv.adjustedScore||orig,10);
+    domainDeltas[d.id]={original:orig,adjusted:adj,delta:adj-orig};
+  });
+
+  state.review.completedAt=new Date().toISOString();
+  state.review.feedbackMetrics={
+    confirmed:confirmed,partial:partial,incorrect:incorrect,
+    missedFindings:missed,totalVerified:totalVerified,
+    findingAccuracyRate:totalVerified>0?(confirmed+partial*0.5)/totalVerified:null,
+    domainDeltas:domainDeltas,
+    originalScore:a.analysis&&a.analysis.overallScore||0,
+    adjustedScore:state.review.adjustedTotalScore,
+    scoreDelta:state.review.adjustedTotalScore-(a.analysis&&a.analysis.overallScore||0),
+  };
+
+  a.status=state.review.approvalStatus;
+  a.verification=state.review;
+  saveAssessments(state.assessments);
+
+  state.view='confirm';
+  render();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
