@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOAT Risk — Property Security Assessment | MontroLabs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#1A2A40;
+  --blue:#3578C4;
+  --blue-dark:#245FAA;
+  --blue-tint:#EBF3FC;
+  --blue-mid:#5B9BD5;
+  --gray:#5A6777;
+  --gray-light:#8596A8;
+  --bg:#EEF2F7;
+  --surface:#FFFFFF;
+  --border:#D8E1EE;
+  --border-light:#EAF0F8;
+  --text:#1A2A40;
+  --muted:#5A6777;
+  --success:#0E7C5A;
+  --success-tint:#E8F7F2;
+  --warn:#B45309;
+  --warn-tint:#FEF3C7;
+  --danger:#C0392B;
+  --danger-tint:#FDECEA;
+  --orange:#C05621;
+  --orange-tint:#FEF0E6;
+  --radius:10px;
+  --shadow:0 1px 3px rgba(26,42,64,.07), 0 4px 12px rgba(26,42,64,.05);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+/* Header */
+.hdr{background:var(--navy);padding:0 28px;display:flex;align-items:center;gap:14px;height:60px;position:sticky;top:0;z-index:20;}
+.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.hdr-wordmark{color:#FFFFFF;font-weight:600;font-size:15px;letter-spacing:.02em;}
+.hdr-wordmark span{color:var(--blue-mid);}
+.hdr-divider{width:1px;height:24px;background:rgba(255,255,255,.15);}
+.hdr-subtitle{color:rgba(255,255,255,.55);font-size:12px;font-weight:400;}
+.hdr-badge{margin-left:auto;background:rgba(14,124,90,.2);border:1px solid rgba(14,124,90,.4);border-radius:999px;padding:4px 12px;font-size:11px;color:#4AE0A8;display:none;align-items:center;gap:6px;}
+.hdr-badge-dot{width:6px;height:6px;border-radius:50%;background:#4AE0A8;}
+
+/* API bar */
+.api-bar{background:#FFFFFF;border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:12px;}
+.api-bar label{color:var(--gray);font-size:11px;font-weight:500;white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;}
+.api-bar input{flex:1;max-width:380px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;font-family:inherit;}
+.api-bar input:focus{outline:2px solid var(--blue);outline-offset:1px;}
+.api-link{font-size:11px;color:var(--blue);text-decoration:none;}
+.api-link:hover{text-decoration:underline;}
+
+/* Tabs */
+.tabs{background:#FFFFFF;border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0;}
+.tab{background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;padding:14px 18px;font-size:13px;font-weight:500;font-family:inherit;color:var(--gray);transition:all .15s;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab:hover:not(:disabled){color:var(--navy);}
+.tab:disabled{color:#C5D2DF;cursor:not-allowed;}
+
+/* Page body */
+.page{padding:28px;max-width:980px;margin:0 auto;}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:14px;}
+.card-h{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:4px;}
+
+/* Form */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--gray);margin-bottom:5px;}
+.field input,.field textarea,.field select{width:100%;background:#FAFBFD;border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;transition:border .15s;}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--blue);background:#FFFFFF;}
+.field textarea{resize:vertical;}
+.field select{cursor:pointer;}
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;}
+.check-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 11px;transition:all .15s;}
+.check-label:hover{border-color:var(--blue);background:var(--blue-tint);}
+.check-label input[type=checkbox]{accent-color:var(--blue);width:15px;height:15px;}
+.check-label.checked{border-color:var(--blue);background:var(--blue-tint);color:var(--blue-dark);}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFD;}
+.upload-zone:hover{border-color:var(--blue);background:var(--blue-tint);}
+.upload-icon{font-size:28px;margin-bottom:8px;}
+.upload-title{font-size:14px;font-weight:500;color:var(--navy);margin-bottom:4px;}
+.upload-sub{font-size:12px;color:var(--gray);}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:14px;}
+.img-thumb{border-radius:8px;border:1px solid var(--border);overflow:hidden;position:relative;box-shadow:var(--shadow);}
+.img-thumb img{width:100%;height:90px;object-fit:cover;display:block;}
+.img-label{padding:6px 8px;background:#FAFBFD;border-top:1px solid var(--border-light);}
+.img-label input{width:100%;background:transparent;border:none;color:var(--text);font-size:11px;font-family:inherit;outline:none;}
+.rm-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.5);border:none;color:#FFF;cursor:pointer;font-size:13px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;backdrop-filter:blur(4px);}
+.add-btn-sm{background:var(--blue-tint);border:1px solid var(--blue);border-radius:7px;padding:6px 14px;color:var(--blue-dark);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;}
+.add-btn-sm:hover{background:var(--blue);color:#FFF;}
+
+/* Primary button */
+.btn-primary{width:100%;background:var(--blue);border:none;border-radius:8px;padding:13px;color:#FFFFFF;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;letter-spacing:.01em;}
+.btn-primary:hover{background:var(--blue-dark);}
+.btn-primary:disabled{background:#B8CAE0;cursor:not-allowed;}
+.btn-hint{text-align:center;font-size:11px;color:var(--gray-light);margin-top:8px;}
+
+/* Score shield */
+.results-grid{display:grid;grid-template-columns:220px 1fr;gap:18px;margin-bottom:18px;}
+.shield-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.shield-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-light);margin-bottom:10px;}
+
+/* Domain bars */
+.domain-row{margin-bottom:11px;}
+.domain-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.domain-name{font-size:12px;font-weight:500;color:var(--navy);}
+.domain-score{font-size:13px;font-weight:600;}
+.bar-track{height:6px;background:var(--border-light);border-radius:999px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:999px;transition:width .6s ease;}
+.domain-std{font-size:10px;color:var(--gray-light);margin-top:2px;}
+
+/* Findings */
+.finding{border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:4px solid;}
+.finding-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.sev-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
+.finding-std{font-size:10px;color:var(--gray);margin-left:auto;}
+.finding-txt{font-size:13px;color:var(--navy);font-weight:500;margin-bottom:4px;}
+.finding-loc{font-size:11px;color:var(--gray);margin-bottom:4px;}
+.finding-rec{font-size:12px;color:var(--success);font-weight:500;}
+
+/* Image analysis tabs */
+.img-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.img-tab{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;color:var(--gray);font-size:11px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;}
+.img-tab.active{border-color:var(--blue);color:var(--blue);background:var(--blue-tint);}
+.ia-col-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:8px;}
+.ia-row{display:flex;gap:7px;margin-bottom:5px;align-items:flex-start;}
+.ia-row span{font-size:12px;color:var(--text);line-height:1.5;}
+.ia-icon{font-size:13px;margin-top:1px;flex-shrink:0;}
+
+/* Pipeline steps */
+.pipe-item{display:flex;gap:14px;margin-bottom:6px;}
+.pipe-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.pipe-connector{width:2px;height:10px;margin:2px 15px;}
+.pipe-body{flex:1;border-radius:8px;padding:9px 13px;margin-bottom:4px;}
+.pipe-name{font-size:13px;font-weight:600;}
+.pipe-desc{font-size:11px;margin-top:2px;}
+
+/* Report */
+.rpt-cover{background:var(--navy);border-radius:var(--radius);padding:32px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden;}
+.rpt-cover-bg{position:absolute;inset:0;opacity:.04;background:repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%) 0 0/20px 20px;}
+.rpt-logo-text{color:var(--blue-mid);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;}
+.rpt-title{color:#FFFFFF;font-size:20px;font-weight:600;margin-bottom:6px;}
+.rpt-client{color:rgba(255,255,255,.55);font-size:12px;margin-bottom:18px;}
+.rpt-score-box{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px 32px;}
+.rpt-std-line{color:rgba(255,255,255,.3);font-size:10px;margin-top:12px;}
+.rpt-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);}
+.rpt-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-light);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border-light);}
+.rpt-table{width:100%;border-collapse:collapse;}
+.rpt-table th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-light);padding:6px 8px;border-bottom:1px solid var(--border);}
+.rpt-table td{font-size:12px;padding:7px 8px;border-bottom:1px solid var(--border-light);color:var(--text);}
+.rpt-table tr:last-child td{border-bottom:none;}
+.rpt-priority{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;}
+.rpt-pri-num{width:22px;height:22px;border-radius:50%;background:var(--danger-tint);border:1px solid #F5C0BA;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--danger);flex-shrink:0;margin-top:1px;}
+.rpt-pri-txt{font-size:13px;color:var(--navy);}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(238,242,247,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:100;backdrop-filter:blur(4px);}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-txt{color:var(--navy);font-size:13px;font-weight:500;}
+.loading-sub{color:var(--gray);font-size:11px;}
+
+.err{color:var(--danger);font-size:13px;padding:20px;background:var(--danger-tint);border-radius:8px;border:1px solid #F5C0BA;}
+@media(max-width:680px){.grid2{grid-template-columns:1fr;}.results-grid{grid-template-columns:1fr;}.rpt-cover{padding:22px 16px;}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <path d="M16 2L6 7v8c0 6 4.4 11.6 10 13 5.6-1.4 10-7 10-13V7L16 2z" fill="#3578C4" fill-opacity=".25" stroke="#3578C4" stroke-width="1.5"/>
+      <path d="M16 2L6 7v8c0 6 4.4 11.6 10 13 5.6-1.4 10-7 10-13V7L16 2z" fill="none" stroke="rgba(255,255,255,.3)" stroke-width=".75"/>
+      <rect x="11" y="10" width="3" height="8" rx="1" fill="#FFFFFF" fill-opacity=".85"/>
+      <rect x="18" y="10" width="3" height="8" rx="1" fill="#FFFFFF" fill-opacity=".85"/>
+      <rect x="10" y="14" width="12" height="4" rx="1" fill="#3578C4" fill-opacity=".8"/>
+    </svg>
+    <span class="hdr-wordmark">Montro<span>Labs</span></span>
+  </div>
+  <div class="hdr-divider"></div>
+  <span class="hdr-subtitle">moatrisks.com — Property Security Assessment</span>
+  <div class="hdr-badge" id="ready-badge"><div class="hdr-badge-dot"></div>Assessment Ready for Review</div>
+</div>
+
+<!-- API key bar -->
+<div class="api-bar" id="api-bar-wrap">
+  <label>API Key</label>
+  <input type="password" id="api-key" placeholder="sk-ant-api03-…" oninput="apiKey=this.value">
+  <span style="font-size:11px;color:var(--gray);">Get yours at <a class="api-link" href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — stays in this tab only</span>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" id="t-pipe" onclick="showTab('pipe')">How It Works</button>
+  <button class="tab" id="t-intake" onclick="showTab('intake')">Submit Property</button>
+  <button class="tab" id="t-analysis" disabled onclick="showTab('analysis')">Assessment Results</button>
+  <button class="tab" id="t-report" disabled onclick="showTab('report')">Your Report</button>
+</div>
+
+<div class="page" id="main-body"></div>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Analyzing your property…</div>
+  <div class="loading-sub" id="loading-sub">This takes about 20–30 seconds</div>
+</div>
+
+<script>
+const DOMAINS=[
+  {id:'perimeter',label:'Perimeter Security',max:20,std:'ASIS SPC.1 / NFPA 730 §4'},
+  {id:'surveillance',label:'Natural Surveillance',max:20,std:'CPTED Principle 1'},
+  {id:'access',label:'Access Control',max:20,std:'ANSI/ASIS PSC.1 / CPTED P2'},
+  {id:'lighting',label:'Lighting Adequacy',max:15,std:'IESNA RP-33'},
+  {id:'landscape',label:'Landscape / CPTED',max:15,std:'CPTED Territorial Reinforcement'},
+  {id:'emergency',label:'Emergency Readiness',max:10,std:'NFPA 101'},
+  {id:'signage',label:'Signage & Deterrence',max:10,std:'IFC Ch.10 / OSHA 1910.37'},
+];
+const PIPE=[
+  {n:'1',title:'Submit Your Intake Form',desc:'Fill out property details and existing security measures',note:'You\'ll receive a confirmation email',c:'#3578C4'},
+  {n:'2',title:'Upload Property Photos',desc:'Photos of entry points, parking, fencing, gates, lighting',note:'More photos = more precise assessment',c:'#5B9BD5'},
+  {n:'3',title:'AI Image Analysis',desc:'Our Nemotron vision AI reviews each image against national standards',note:'CPTED, NFPA 730, ASIS ESRM, IESNA RP-33',c:'#7B6FC4'},
+  {n:'4',title:'7-Domain Scoring',desc:'Property scored across perimeter, lighting, access, surveillance and more',note:'0–100 with letter grade and risk level',c:'#B45309'},
+  {n:'5',title:'Report Generation',desc:'A branded, professional report compiled with findings and recommendations',note:'PDF ready for your records',c:'#0E7C5A'},
+  {n:'6',title:'Expert Review',desc:'MontroLabs reviews all findings before delivery',note:'You receive final notification',c:'#1A2A40'},
+];
+
+let state={
+  intake:{clientName:'',propertyName:'',propertyType:'commercial',address:'',contact:'',concerns:'',priorIncidents:'',hasCamera:false,hasAlarm:false,hasLighting:false,hasGuard:false},
+  images:[],analysis:null,selImg:0,curTab:'pipe',
+};
+// ── Deployment config ─────────────────────────────────────────────────────
+// LOCAL:  set BACKEND_URL = '' (calls Anthropic directly, key in HTML)
+// PUBLIC: set BACKEND_URL = 'https://api.moatrisks.com' (calls your backend)
+const BACKEND_URL = 'https://api.moatrisks.com';
+let apiKey='';
+
+function gradeOf(s){
+  if(s>=85)return{g:'A',label:'Excellent',c:'#0E7C5A',bg:'#E8F7F2',bc:'#6FCFB0',risk:'Low Risk'};
+  if(s>=70)return{g:'B',label:'Good',c:'#245FAA',bg:'#EBF3FC',bc:'#90BCE8',risk:'Moderate-Low Risk'};
+  if(s>=55)return{g:'C',label:'Fair',c:'#B45309',bg:'#FEF3C7',bc:'#F6C864',risk:'Moderate Risk'};
+  if(s>=40)return{g:'D',label:'Poor',c:'#C05621',bg:'#FEF0E6',bc:'#FBBB8A',risk:'High Risk'};
+  return{g:'F',label:'Critical',c:'#C0392B',bg:'#FDECEA',bc:'#F5A89E',risk:'Critical Risk'};
+}
+function sevStyle(s){
+  return{
+    critical:{color:'#C0392B',bg:'#FDECEA',bc:'#C0392B',pill:'background:#FDECEA;color:#C0392B;border:1px solid #F5A89E'},
+    high:{color:'#C05621',bg:'#FEF0E6',bc:'#C05621',pill:'background:#FEF0E6;color:#C05621;border:1px solid #FBBB8A'},
+    moderate:{color:'#B45309',bg:'#FFFBEB',bc:'#D97706',pill:'background:#FEF3C7;color:#B45309;border:1px solid #F6C864'},
+    low:{color:'#0E7C5A',bg:'#F0FBF7',bc:'#0E7C5A',pill:'background:#E8F7F2;color:#0E7C5A;border:1px solid #6FCFB0'},
+  }[s]||{color:'#5A6777',bg:'#F4F6F9',bc:'#8596A8',pill:'background:#EEF2F7;color:#5A6777;border:1px solid #D8E1EE'};
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function showTab(t){
+  state.curTab=t;
+  ['pipe','intake','analysis','report'].forEach(id=>{
+    const el=document.getElementById('t-'+id);if(el)el.classList.toggle('active',id===t);
+  });
+  render();
+}
+
+function drawAnnotatedCanvas(imgSrc, issues, positives) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var W = Math.min(img.width, 1400);
+      var scale = W / img.width;
+      var H = img.height * scale;
+      var canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, W, H);
+      var hasCoordsI = issues.length && typeof issues[0] === 'object';
+      var hasCoordsP = positives.length && typeof positives[0] === 'object';
+      var R = Math.round(W * 0.019);
+      var fs = Math.round(W * 0.022);
+      issues.forEach(function(item, i) {
+        var x = (hasCoordsI ? (item.x != null ? item.x : 50) : (10 + (i * 15) % 75)) / 100 * W;
+        var y = (hasCoordsI ? (item.y != null ? item.y : 50) : (10 + (i * 21) % 75)) / 100 * H;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, 2 * Math.PI);
+        ctx.fillStyle = '#C0392B'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, W * 0.003); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold ' + fs + 'px Arial';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), x, y);
+      });
+      positives.forEach(function(item, i) {
+        var x = (hasCoordsP ? (item.x != null ? item.x : 70) : (55 + (i * 17) % 40)) / 100 * W;
+        var y = (hasCoordsP ? (item.y != null ? item.y : 30) : (15 + (i * 27) % 65)) / 100 * H;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, 2 * Math.PI);
+        ctx.fillStyle = '#0E7C5A'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, W * 0.003); ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold ' + fs + 'px Arial';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), x, y);
+      });
+      resolve(canvas.toDataURL('image/jpeg', 0.88));
+    };
+    img.src = imgSrc;
+  });
+}
+
+function hexToRgb(hex) {
+  var r = parseInt(hex.slice(1,3),16);
+  var g = parseInt(hex.slice(3,5),16);
+  var b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function escPdf(s) { return String(s || '').replace(/[\x00-\x1F\x7F]/g, ''); }
+
+async function downloadPDF() {
+  if (!window.jspdf) { alert('PDF library not loaded yet — wait a moment and try again.'); return; }
+  var a = state.analysis;
+  if (!a || a.error) { alert('Run an assessment first.'); return; }
+
+  var btn = document.getElementById('pdf-btn');
+  if (btn) { btn.textContent = 'Generating PDF…'; btn.disabled = true; }
+
+  try {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF('p', 'mm', 'a4');
+    var M = 18, PW = 210, PH = 297, CW = PW - 2*M;
+    var y = M;
+
+    var NAVY=[26,42,64], BLUE=[53,120,196], GRAY=[90,103,119], LGRAY=[190,200,215];
+    var WHITE=[255,255,255], DANGER=[192,57,43], SUCCESS=[14,124,90];
+    var WARN=[180,83,9], ORANGE=[192,86,33], LBLUE=[91,155,213];
+
+    var g = gradeOf(a.overallScore || 0);
+    var gRgb = hexToRgb(g.c);
+
+    function sevRgb(s) {
+      return {critical:DANGER,high:ORANGE,moderate:WARN,low:SUCCESS}[s] || GRAY;
+    }
+
+    function newPage() {
+      doc.addPage(); y = M;
+      doc.setFillColor.apply(doc, NAVY); doc.rect(0, 0, PW, 9, 'F');
+      doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.setTextColor.apply(doc, LBLUE); doc.text('MONTROLABS SECURITY SERVICES', M, 6.5);
+      doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, LGRAY);
+      doc.text('PROPERTY SECURITY ASSESSMENT', PW-M, 6.5, {align:'right'});
+      doc.setDrawColor.apply(doc, [53,120,196]); doc.setLineWidth(0.3);
+      doc.line(M, PH-8, PW-M, PH-8);
+      doc.setFontSize(7); doc.setTextColor.apply(doc, LGRAY);
+      doc.text('MontroLabs Security Services  |  Confidential', M, PH-5);
+      doc.text('Page '+doc.internal.getCurrentPageInfo().pageNumber, PW-M, PH-5, {align:'right'});
+      y = 18;
+    }
+
+    function checkPage(need) { if (y + need > PH - 16) newPage(); }
+
+    function sectionHeader(title, color) {
+      checkPage(14);
+      color = color || NAVY;
+      doc.setFontSize(10); doc.setFont('helvetica','bold');
+      doc.setTextColor.apply(doc, color); doc.text(title, M, y);
+      doc.setDrawColor.apply(doc, BLUE); doc.setLineWidth(0.5);
+      doc.line(M, y+2, PW-M, y+2); y += 9;
+    }
+
+    // ── COVER ──────────────────────────────────────────────────────────────
+    doc.setFillColor.apply(doc, NAVY); doc.rect(0, 0, PW, 58, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor.apply(doc, LBLUE);
+    doc.text('MONTROLABS SECURITY SERVICES', PW/2, 20, {align:'center'});
+    doc.setFontSize(21); doc.setTextColor.apply(doc, WHITE);
+    doc.text('PROPERTY SECURITY ASSESSMENT', PW/2, 34, {align:'center'});
+    doc.setFontSize(13); doc.text('REPORT', PW/2, 44, {align:'center'});
+    y = 68;
+
+    var ci = a.clientInfo || {};
+    var infoRows = [
+      ['Client', ci.clientName||'—'], ['Property', ci.propertyName||'—'],
+      ['Type', (ci.propertyType||'—').replace(/_/g,' ')], ['Address', ci.address||'—'],
+      ['Date', new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})]
+    ];
+    infoRows.forEach(function(row) {
+      doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.setTextColor.apply(doc, GRAY); doc.text(row[0]+':', M, y);
+      doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, NAVY);
+      var vals = doc.splitTextToSize(escPdf(row[1]), CW-36);
+      doc.text(vals, M+32, y); y += 7;
+    });
+    y += 6;
+
+    // Score box
+    doc.setDrawColor.apply(doc, gRgb); doc.setLineWidth(1.2);
+    doc.roundedRect(M, y, CW, 32, 3, 3, 'S');
+    doc.setFontSize(36); doc.setFont('helvetica','bold');
+    doc.setTextColor.apply(doc, gRgb);
+    doc.text(String(a.overallScore||0)+'/100', PW/2, y+17, {align:'center'});
+    doc.setFontSize(12);
+    doc.text('Grade '+g.g+' \u2014 '+g.label+'  \u00b7  '+g.risk, PW/2, y+27, {align:'center'});
+    y += 40;
+
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+    doc.setTextColor.apply(doc, LGRAY);
+    doc.text('Standards: CPTED \u00b7 NFPA 730 \u00b7 ASIS SPC.1 \u00b7 ANSI/ASIS PSC.1 \u00b7 IESNA RP-33 \u00b7 NFPA 101 \u00b7 IFC Ch.10 \u00b7 OSHA 1910.37', PW/2, y, {align:'center'});
+
+    // ── PAGE 2: SUMMARY + DOMAINS ─────────────────────────────────────────
+    newPage();
+    sectionHeader('EXECUTIVE SUMMARY');
+    doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, [40,40,40]);
+    var sumLines = doc.splitTextToSize(escPdf(a.executiveSummary||''), CW);
+    doc.text(sumLines, M, y); y += sumLines.length * 5.2 + 10;
+
+    sectionHeader('DOMAIN SCORES');
+    var DS = a.domainScores||{};
+    var DMAX = {perimeter:20,surveillance:20,access:20,lighting:15,landscape:15,emergency:10,signage:10};
+    var DLBL = {perimeter:'Perimeter Security',surveillance:'Natural Surveillance',access:'Access Control',lighting:'Lighting Adequacy',landscape:'Landscape / CPTED',emergency:'Emergency Readiness',signage:'Signage & Deterrence'};
+    var DSTD = {perimeter:'ASIS SPC.1',surveillance:'CPTED P1',access:'ANSI/ASIS PSC.1',lighting:'IESNA RP-33',landscape:'CPTED P3',emergency:'NFPA 101',signage:'IFC Ch.10'};
+    Object.keys(DLBL).forEach(function(id) {
+      var sc = DS[id]||0, max = DMAX[id], pct = sc/max;
+      var dg = gradeOf(Math.round(pct*100)), dgRgb = hexToRgb(dg.c);
+      doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, NAVY);
+      doc.text(DLBL[id], M, y);
+      doc.setFontSize(7.5); doc.setTextColor.apply(doc, GRAY);
+      doc.text(DSTD[id], M+76, y);
+      doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, dgRgb);
+      doc.text(sc+'/'+max, PW-M, y, {align:'right'});
+      doc.setFillColor(220,228,240); doc.roundedRect(M, y+2, CW, 3, 1, 1, 'F');
+      if (pct > 0) { doc.setFillColor.apply(doc, dgRgb); doc.roundedRect(M, y+2, CW*pct, 3, 1, 1, 'F'); }
+      y += 10;
+    });
+    doc.setFillColor.apply(doc, NAVY); doc.rect(M, y, CW, 9, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, WHITE);
+    doc.text('OVERALL SCORE', M+4, y+6);
+    doc.setTextColor.apply(doc, gRgb);
+    doc.text(String(a.overallScore||0)+'/100  \u00b7  Grade '+g.g, PW-M-4, y+6, {align:'right'});
+    y += 15;
+
+    var prios = a.topPriorities||[];
+    if (prios.length) {
+      sectionHeader('IMMEDIATE ACTION ITEMS', DANGER);
+      prios.forEach(function(p, i) {
+        checkPage(14);
+        doc.setFillColor.apply(doc, DANGER); doc.circle(M+4, y-1, 3.2, 'F');
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, WHITE);
+        doc.text(String(i+1), M+4, y+0.6, {align:'center'});
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, NAVY);
+        var ls = doc.splitTextToSize(escPdf(p), CW-11);
+        doc.text(ls, M+10, y); y += ls.length * 5 + 4;
+      });
+    }
+
+    // ── ANNOTATED PHOTO PAGES ─────────────────────────────────────────────
+    var ia = a.imageAnalysis||[];
+    for (var idx=0; idx<ia.length; idx++) {
+      var pd = ia[idx];
+      var imgSrc = state.images[idx] && state.images[idx].preview;
+      if (!imgSrc) continue;
+      var imgLabel = (state.images[idx] && state.images[idx].label) || ('Photo '+(idx+1));
+      var issues = pd.issues||[], positives = pd.positives||[];
+
+      newPage();
+      doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, NAVY);
+      doc.text('Photo '+(idx+1)+': '+escPdf(pd.area||imgLabel), M, y);
+      doc.setDrawColor.apply(doc, BLUE); doc.setLineWidth(0.4);
+      doc.line(M, y+2, PW-M, y+2); y += 10;
+
+      var annotated = await drawAnnotatedCanvas(imgSrc, issues, positives);
+      var tmpImg = new Image();
+      await new Promise(function(r){tmpImg.onload=r; tmpImg.src=annotated;});
+      var aspect = tmpImg.naturalWidth / tmpImg.naturalHeight;
+      var maxH = 94, imgW = CW, imgH = imgW/aspect;
+      if (imgH > maxH) { imgH=maxH; imgW=imgH*aspect; }
+      checkPage(imgH+8);
+      doc.addImage(annotated, 'JPEG', M+(CW-imgW)/2, y, imgW, imgH);
+      y += imgH+10;
+
+      var c1W=CW*0.53, c2X=M+c1W+5, c2W=CW-c1W-5, y1=y, y2=y;
+
+      if (issues.length) {
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, DANGER);
+        doc.text('ISSUES FOUND', M, y1); y1+=5.5;
+        issues.forEach(function(item,i){
+          checkPage(10);
+          var txt=typeof item==='string'?item:(item.text||String(item));
+          doc.setFillColor.apply(doc,DANGER); doc.circle(M+3.2,y1-0.8,3,'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,WHITE);
+          doc.text(String(i+1),M+3.2,y1+0.5,{align:'center'});
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,[40,40,40]);
+          var ls=doc.splitTextToSize(escPdf(txt),c1W-9);
+          doc.text(ls,M+8.5,y1); y1+=ls.length*4.5+2.5;
+        });
+      }
+      var cpted=pd.cptedViolations||[];
+      if (cpted.length) {
+        y1+=3; doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,WARN);
+        doc.text('CPTED VIOLATIONS',M,y1); y1+=5;
+        cpted.forEach(function(v){
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,[40,40,40]);
+          var ls=doc.splitTextToSize('\u25c6 '+escPdf(v),c1W-5);
+          doc.text(ls,M,y1); y1+=ls.length*4.5+2;
+        });
+      }
+
+      if (positives.length) {
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,SUCCESS);
+        doc.text('SECURITY STRENGTHS',c2X,y2); y2+=5.5;
+        positives.forEach(function(item,i){
+          var txt=typeof item==='string'?item:(item.text||String(item));
+          doc.setFillColor.apply(doc,SUCCESS); doc.circle(c2X+3.2,y2-0.8,3,'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,WHITE);
+          doc.text(String(i+1),c2X+3.2,y2+0.5,{align:'center'});
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,[40,40,40]);
+          var ls=doc.splitTextToSize(escPdf(txt),c2W-9);
+          doc.text(ls,c2X+8.5,y2); y2+=ls.length*4.5+2.5;
+        });
+      }
+      y=Math.max(y1,y2)+8;
+    }
+
+    // ── DETAILED FINDINGS ─────────────────────────────────────────────────
+    var findings=[...(a.findings||[])].sort(function(x,z){return ({critical:0,high:1,moderate:2,low:3}[x.severity]||4)-({critical:0,high:1,moderate:2,low:3}[z.severity]||4);});
+    if (findings.length) {
+      newPage(); sectionHeader('DETAILED FINDINGS & RECOMMENDATIONS');
+      findings.forEach(function(f,i){
+        checkPage(28);
+        var sr=sevRgb(f.severity);
+        doc.setFillColor.apply(doc,sr); doc.roundedRect(M,y,20,5.5,1,1,'F');
+        doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,WHITE);
+        doc.text((f.severity||'').toUpperCase(),M+10,y+4,{align:'center'});
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,GRAY);
+        doc.text(escPdf(f.standard||''),PW-M,y+4,{align:'right'}); y+=7.5;
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,NAVY);
+        var fl=doc.splitTextToSize('F'+String(i+1).padStart(3,'0')+': '+escPdf(f.finding||''),CW);
+        doc.text(fl,M,y); y+=fl.length*5+2;
+        if (f.location){doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor.apply(doc,GRAY);doc.text('Area: '+escPdf(f.location),M,y);y+=5;}
+        doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc,SUCCESS);
+        var rl=doc.splitTextToSize('\u2192 '+escPdf(f.recommendation||''),CW);
+        doc.text(rl,M,y); y+=rl.length*5+5;
+        doc.setDrawColor(220,225,235); doc.setLineWidth(0.25); doc.line(M,y-2,PW-M,y-2);
+      });
+    }
+
+    // ── DISCLAIMER ────────────────────────────────────────────────────────
+    checkPage(20);
+    doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc,GRAY);
+    var disc='This report was generated using AI-assisted image analysis and is intended to supplement, not replace, consultation with a licensed physical security professional. Standards referenced: CPTED, NFPA 730, ASIS SPC.1, ANSI/ASIS PSC.1, IESNA RP-33, NFPA 101, IFC Chapter 10, OSHA 1910.37. Pending review by MontroLabs assessor before client delivery.';
+    var dl=doc.splitTextToSize(disc,CW);
+    doc.text(dl,M,y);
+
+    var clientName=(a.clientInfo&&a.clientInfo.clientName||'Assessment').replace(/[^a-z0-9]/gi,'_');
+    var dateStr=new Date().toISOString().slice(0,10);
+    doc.save('MontroLabs_'+clientName+'_'+dateStr+'.pdf');
+  } catch(err) {
+    alert('PDF error: '+err.message);
+    console.error(err);
+  } finally {
+    if (btn) { btn.textContent='Download PDF Report'; btn.disabled=false; }
+  }
+}
+
+
+
+function compressImageForStorage(imgSrc) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 500, scale = Math.min(1, maxW / img.width);
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.45));
+    };
+    img.onerror = function() { resolve(null); };
+    img.src = imgSrc;
+  });
+}
+
+async function saveToQueue(analysis) {
+  try {
+    var existing = JSON.parse(localStorage.getItem('montrolabs_queue') || '[]');
+    var now = new Date();
+    var id = 'ML-' + now.getFullYear() + '-' + String(existing.length + 1).padStart(4, '0');
+    var thumbs = [];
+    for (var i = 0; i < state.images.length; i++) {
+      var t = await compressImageForStorage(state.images[i].preview);
+      thumbs.push(t);
+    }
+    var record = {
+      id: id,
+      status: 'pending_review',
+      submittedAt: now.toISOString(),
+      clientInfo: analysis.clientInfo || {},
+      analysis: analysis,
+      thumbnails: thumbs,
+      imageLabels: state.images.map(function(i){return i.label||i.name;}),
+      verification: null
+    };
+    existing.unshift(record);
+    localStorage.setItem('montrolabs_queue', JSON.stringify(existing));
+    console.log('Saved to review queue:', id);
+  } catch(e) {
+    console.warn('Could not save to queue:', e.message);
+  }
+}
+
+
+function render(){
+  const b=document.getElementById('main-body');
+  if(state.curTab==='pipe')b.innerHTML=renderPipe();
+  else if(state.curTab==='intake'){b.innerHTML=renderIntake();bindIntake();}
+  else if(state.curTab==='analysis')b.innerHTML=state.analysis?renderAnalysis():'<div class="err">No assessment yet. Submit your property first.</div>';
+  else if(state.curTab==='report')b.innerHTML=state.analysis?renderReport():'<div class="err">No report yet.</div>';
+}
+
+function renderPipe(){
+  let h=`<div class="card" style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <svg width="36" height="36" viewBox="0 0 36 36"><path d="M18 3L5 9.5v10C5 26.8 10.8 33.3 18 35c7.2-1.7 13-8.2 13-15.5V9.5L18 3z" fill="#EBF3FC" stroke="#3578C4" stroke-width="1.5"/><rect x="12" y="14" width="4" height="8" rx="1.5" fill="#3578C4" fill-opacity=".7"/><rect x="20" y="14" width="4" height="8" rx="1.5" fill="#3578C4" fill-opacity=".7"/><rect x="11" y="19" width="14" height="3" rx="1" fill="#1A2A40"/></svg>
+      <div><div style="font-size:18px;font-weight:600;color:var(--navy)">How Your Assessment Works</div><div style="font-size:13px;color:var(--gray)">AI-powered property security analysis against national safety standards</div></div>
+    </div>
+  </div>`;
+  PIPE.forEach((s,i)=>{
+    h+=`<div class="pipe-item">
+      <div style="display:flex;flex-direction:column;align-items:center;width:34px;">
+        <div class="pipe-num" style="background:${s.c}18;color:${s.c};border:1.5px solid ${s.c}44">${s.n}</div>
+        ${i<PIPE.length-1?`<div class="pipe-connector" style="background:${s.c}30"></div>`:''}
+      </div>
+      <div class="pipe-body" style="background:${s.c}08;border:1px solid ${s.c}22">
+        <div class="pipe-name" style="color:var(--navy)">${s.title}</div>
+        <div class="pipe-desc" style="color:var(--gray)">${s.desc}</div>
+        <div style="font-size:10px;color:${s.c};margin-top:3px;font-weight:500">→ ${s.note}</div>
+      </div>
+    </div>`;
+  });
+  h+=`<div class="card" style="margin-top:20px;background:var(--navy);border-color:var(--navy)">
+    <div style="color:var(--blue-mid);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">National Standards Applied</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      ${[['CPTED','Crime Prevention Through Environmental Design'],['NFPA 730','Guide for Premises Security'],['ASIS SPC.1','Physical Security Standard'],['ANSI/ASIS PSC.1','Asset Protection Standard'],['IESNA RP-33','Parking & Exterior Lighting'],['NFPA 101','Life Safety Code'],['IFC Ch. 10','Means of Egress Requirements'],['OSHA 1910.37','Exit Route Maintenance']].map(([n,d])=>`<div style="background:rgba(255,255,255,.06);border-radius:7px;padding:8px 10px;"><div style="font-size:11px;font-weight:600;color:#FFFFFF;margin-bottom:1px">${n}</div><div style="font-size:10px;color:rgba(255,255,255,.45)">${d}</div></div>`).join('')}
+    </div>
+  </div>`;
+  return h;
+}
+
+function renderIntake(){
+  const s=state.intake;const imgs=state.images;
+  return `
+<div class="grid2">
+<div class="card">
+  <div class="card-title">Client Information</div>
+  <div class="field"><label>Your Name</label><input type="text" id="f-cn" value="${esc(s.clientName)}" placeholder="Full name"></div>
+  <div class="field"><label>Property Name</label><input type="text" id="f-pn" value="${esc(s.propertyName)}" placeholder="e.g. Oakwood Business Park"></div>
+  <div class="field"><label>Property Address</label><input type="text" id="f-addr" value="${esc(s.address)}" placeholder="Street address, city, state"></div>
+  <div class="field"><label>Contact Email</label><input type="text" id="f-ct" value="${esc(s.contact)}" placeholder="your@email.com"></div>
+  <div class="field"><label>Property Type</label><select id="f-pt">
+    ${[['commercial','Commercial'],['residential_hoa','Residential / HOA'],['equipment_yard','Equipment Yard'],['warehouse','Warehouse'],['office_campus','Office Campus'],['retail','Retail'],['industrial','Industrial']].map(([v,l])=>`<option value="${v}"${s.propertyType===v?' selected':''}>${l}</option>`).join('')}
+  </select></div>
+</div>
+<div class="card">
+  <div class="card-title">Security Context</div>
+  <div class="field"><label>Primary Security Concerns</label><textarea id="f-con" rows="3" placeholder="e.g. vehicle break-ins, unauthorized access after hours">${esc(s.concerns)}</textarea></div>
+  <div class="field"><label>Prior Incidents (past 12 months)</label><textarea id="f-pi" rows="2" placeholder="Describe any incidents, or 'none'">${esc(s.priorIncidents)}</textarea></div>
+  <div class="field">
+    <label>Existing Security Measures</label>
+    <div class="check-grid">
+      <label class="check-label${s.hasCamera?' checked':''}"><input type="checkbox" id="f-cam"${s.hasCamera?' checked':''}> CCTV Cameras</label>
+      <label class="check-label${s.hasAlarm?' checked':''}"><input type="checkbox" id="f-alm"${s.hasAlarm?' checked':''}> Monitored Alarm</label>
+      <label class="check-label${s.hasLighting?' checked':''}"><input type="checkbox" id="f-lit"${s.hasLighting?' checked':''}> Exterior Lighting</label>
+      <label class="check-label${s.hasGuard?' checked':''}"><input type="checkbox" id="f-grd"${s.hasGuard?' checked':''}> Security Guard</label>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><div class="card-h">Property Photos</div><div style="font-size:12px;color:var(--gray)">${imgs.length} image${imgs.length!==1?'s':''} uploaded</div></div>
+    <button class="add-btn-sm" onclick="document.getElementById('file-in').click()">+ Add Photos</button>
+  </div>
+  <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="addImages(this)">
+  ${imgs.length===0?`<div class="upload-zone" onclick="document.getElementById('file-in').click()">
+    <div class="upload-icon">📷</div>
+    <div class="upload-title">Click to upload property photos</div>
+    <div class="upload-sub">Entry points · parking · fencing · gates · lighting · cameras · emergency equipment</div>
+    <div style="font-size:11px;color:var(--gray-light);margin-top:6px">NFPA 730 §4 recommends photos of all perimeter access points</div>
+  </div>`:
+  `<div class="img-grid">${imgs.map((img,i)=>`<div class="img-thumb"><img src="${img.preview}" alt="Image ${i+1}"><div class="img-label"><input type="text" value="${esc(img.label)}" placeholder="Label this area…" oninput="setLabel(${i},this.value)"></div><button class="rm-btn" onclick="removeImg(${i})">×</button></div>`).join('')}</div>`}
+</div>
+
+<button class="btn-primary" ${imgs.length===0?'disabled':''} onclick="runAnalysis()">
+  ${imgs.length===0?'Upload photos to begin your assessment':'Start Security Assessment — '+imgs.length+' Photo'+(imgs.length!==1?'s':'')+' Ready'}</button>
+${imgs.length?`<div class="btn-hint">Analysis runs against CPTED · NFPA 730 · ASIS SPC.1 · IESNA RP-33 · NFPA 101 national safety standards</div>`:''}`;
+}
+
+function bindIntake(){
+  [['f-cn','clientName'],['f-pn','propertyName'],['f-addr','address'],['f-ct','contact'],['f-con','concerns'],['f-pi','priorIncidents'],['f-pt','propertyType']].forEach(([id,k])=>{
+    const el=document.getElementById(id);if(el)el.oninput=()=>{state.intake[k]=el.value;};
+  });
+  [['f-cam','hasCamera'],['f-alm','hasAlarm'],['f-lit','hasLighting'],['f-grd','hasGuard']].forEach(([id,k])=>{
+    const el=document.getElementById(id);if(el)el.onchange=()=>{state.intake[k]=el.checked;render();};
+  });
+}
+
+function addImages(input){
+  Array.from(input.files).forEach(f=>{state.images.push({file:f,name:f.name,preview:URL.createObjectURL(f),label:'',mt:f.type||'image/jpeg'});});
+  input.value='';render();
+}
+function removeImg(i){URL.revokeObjectURL(state.images[i].preview);state.images.splice(i,1);render();}
+function setLabel(i,v){state.images[i].label=v;}
+function b64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+
+function setLoading(show,txt='',sub=''){
+  document.getElementById('loading-overlay').style.display=show?'flex':'none';
+  if(txt)document.getElementById('loading-txt').textContent=txt;
+  if(sub)document.getElementById('loading-sub').textContent=sub;
+}
+
+async function runAnalysis(){
+  if(!state.images.length){alert('Please upload at least one photo.');return;}
+  const usingBackend = BACKEND_URL !== '';
+  const key = usingBackend ? '' : (apiKey||document.getElementById('api-key').value);
+  if(!usingBackend && !key){alert('Please enter your Anthropic API key at the top of the page.');return;}
+
+  setLoading(true,'Processing your property photos…','Extracting intake information');
+  try{
+    await new Promise(r=>setTimeout(r,400));
+    setLoading(true,'Running security analysis…','Evaluating against national safety standards');
+    const imgContent=await Promise.all(state.images.map(async img=>({type:'image',source:{type:'base64',media_type:img.mt,data:await b64(img.file)}})));
+    const sys=`You are a certified physical security assessment AI operating under CPTED, NFPA 730, ASIS ESRM, and IESNA RP-33 national safety standards. Analyze property images professionally.
+
+Return ONLY valid JSON — no markdown, no preamble:
+{"overallScore":<0-100>,"domainScores":{"perimeter":<0-20>,"surveillance":<0-20>,"access":<0-20>,"lighting":<0-15>,"landscape":<0-15>,"emergency":<0-10>,"signage":<0-10>},"findings":[{"id":"F001","domain":"<id>","severity":"critical|high|moderate|low","finding":"<specific observation>","location":"<area>","standard":"<citation>","recommendation":"<actionable fix>"}],"imageAnalysis":[{"imageIndex":0,"area":"<name>","issues":[{"text":"<issue description>","x":<0-100>,"y":<0-100>}],"positives":[{"text":"<strength description>","x":<0-100>,"y":<0-100>}],"cptedViolations":["<violation>"]}],"executiveSummary":"<3-4 professional sentences for the property owner>","topPriorities":["<action>","<action>","<action>"]}
+
+Scoring: perimeter/20 ASIS SPC.1 fencing/gates/barriers; surveillance/20 CPTED P1 sightlines/cameras/blind spots; access/20 ANSI/ASIS PSC.1 entry control/hardware; lighting/15 IESNA RP-33 parking 0.5fc/walkways 1.0fc/entries 5.0fc; landscape/15 CPTED P3 concealment/clear zones; emergency/10 NFPA 101 egress/exit signs; signage/10 IFC Ch.10/OSHA 1910.37 warnings/notices. Be specific about what you see. For issues and positives in imageAnalysis, set x and y as percentage position (0=left/top 100=right/bottom) of where that condition appears in the photo. Return JSON only.`;
+    const userContent=[{type:'text',text:`Security Assessment\nClient: ${state.intake.clientName||'Client'}\nProperty: ${state.intake.propertyName||'Subject Property'}\nType: ${state.intake.propertyType}\nAddress: ${state.intake.address||'Not provided'}\nConcerns: ${state.intake.concerns||'General assessment'}\nExisting security: Cameras=${state.intake.hasCamera}, Alarm=${state.intake.hasAlarm}, Lighting=${state.intake.hasLighting}, Guard=${state.intake.hasGuard}\nPrior incidents: ${state.intake.priorIncidents||'None reported'}\nImages: ${state.images.map((img,i)=>`Image ${i+1} (${img.label||img.name})`).join(', ')}\n\nAnalyze all images against national standards. Return JSON only.`},...imgContent];
+    setLoading(true,'Generating your security report…','Compiling findings and recommendations');
+    // Route through backend (production) or directly (local dev)
+    const apiBody = {model:'claude-sonnet-4-6',max_tokens:8192,system:sys,messages:[{role:'user',content:userContent}]};
+    let resp;
+    if(usingBackend){
+      resp = await fetch(BACKEND_URL+'/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(apiBody)});
+    } else {
+      resp = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(apiBody)});
+    }
+    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'API error '+resp.status);}
+    const data=await resp.json();
+    const stopReason=data.stop_reason;
+    const raw=data.content?.find(b=>b.type==='text')?.text||'{}';
+    const txt=raw.replace(/```json|```/g,'').trim();
+    let result=null;
+    try{
+      result=JSON.parse(txt);
+    }catch(_){
+      // Response was truncated — attempt structural repair
+      try{
+        let fixed=txt;
+        // Drop last incomplete object (no closing brace)
+        fixed=fixed.replace(/,\s*\{[^}]*$/,'');
+        // Count and close any open brackets
+        const opens=(fixed.match(/[\[\{]/g)||[]).length;
+        const closes=(fixed.match(/[\]\}]/g)||[]).length;
+        const depth=opens-closes;
+        for(let i=0;i<depth;i++) fixed+=(i%2===0)?']':'}';
+        if(!fixed.endsWith('}'))fixed+='}';
+        result=JSON.parse(fixed);
+        result._truncated=true;
+      }catch(pe2){
+        state.analysis={error:'Response cut off before finishing. Try 3–4 photos at a time and re-run. Preview: '+txt.substring(0,300)+'...'};
+        document.getElementById('t-analysis').disabled=false;
+        showTab('analysis');
+        setLoading(false);
+        return;
+      }
+    }
+    state.analysis={...result,clientInfo:{...state.intake},imageLabels:state.images.map(i=>i.label||i.name),timestamp:new Date().toISOString()};
+    saveToQueue(state.analysis);
+    document.getElementById('t-analysis').disabled=false;
+    document.getElementById('t-report').disabled=false;
+    const rb=document.getElementById('ready-badge');rb.style.display='flex';
+    showTab('analysis');
+  }catch(e){state.analysis={error:e.message};document.getElementById('t-analysis').disabled=false;showTab('analysis');}
+  setLoading(false);
+}
+
+function shieldSvg(score,g){
+  const R=52,cx=70,cy=74,circ=2*Math.PI*R,arc=circ*.75,fill=arc*(score/100);
+  return`<svg width="140" height="148" viewBox="0 0 140 148">
+    <defs>
+      <linearGradient id="sf" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="${g.c}" stop-opacity=".4"/>
+        <stop offset="1" stop-color="${g.c}"/>
+      </linearGradient>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${g.bc}" stroke-opacity=".3" stroke-width="9" stroke-dasharray="${arc} ${circ}" stroke-linecap="round" transform="rotate(135 ${cx} ${cy})"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="url(#sf)" stroke-width="9" stroke-dasharray="${fill} ${circ}" stroke-linecap="round" transform="rotate(135 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" fill="${g.c}" font-size="34" font-family="Georgia,serif" font-weight="700">${score}</text>
+    <text x="${cx}" y="${cy+13}" text-anchor="middle" fill="#8596A8" font-size="10" font-family="Inter,sans-serif">/100</text>
+    <text x="${cx}" y="${cy+28}" text-anchor="middle" fill="${g.c}" font-size="11" font-family="Inter,sans-serif" font-weight="600">Grade ${g.g}</text>
+    <text x="${cx}" y="${cy+42}" text-anchor="middle" fill="#8596A8" font-size="9" font-family="Inter,sans-serif">${g.risk}</text>
+  </svg>`;
+}
+
+function renderAnalysis(){
+  const a=state.analysis;
+  if(a.error)return`<div class="err">${esc(a.error)}</div>`;
+  const score=a.overallScore||0;const g=gradeOf(score);
+  const ds=a.domainScores||{};
+  const sorted=[...(a.findings||[])].sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]??4)-({critical:0,high:1,moderate:2,low:3}[y.severity]??4));
+  const ia=a.imageAnalysis||[];
+
+  let h='';
+  if(a._truncated){
+    h+=`<div style="background:#FEF3C7;border:1px solid #F6C864;border-left:4px solid #B45309;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#B45309"><strong>Note:</strong> The AI response was partially truncated — findings shown below are complete but may not cover every photo. For a full assessment, try re-running with 3–4 photos at a time.</div>`;
+  }
+  h+=`<div class="results-grid">
+    <div class="shield-card">
+      <div class="shield-label">Security Score</div>
+      ${shieldSvg(score,g)}
+      <div style="font-size:13px;font-weight:600;color:${g.c};margin-top:4px">${g.label}</div>
+      <div style="font-size:11px;color:var(--gray);margin-top:2px">${g.risk}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Executive Summary</div>
+      <p style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:14px">${esc(a.executiveSummary||'No summary available.')}</p>
+      <div class="card-title">Immediate Priorities</div>
+      ${(a.topPriorities||[]).map((p,i)=>`<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start"><div style="width:20px;height:20px;border-radius:50%;background:var(--danger-tint);border:1px solid #F5C0BA;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--danger);flex-shrink:0;margin-top:1px">${i+1}</div><span style="font-size:13px;color:var(--navy)">${esc(p)}</span></div>`).join('')}
+      <div style="font-size:10px;color:var(--gray-light);margin-top:10px">${esc(a.clientInfo?.propertyName||'')}${a.clientInfo?.address?' · '+esc(a.clientInfo.address):''} · ${a.timestamp?new Date(a.timestamp).toLocaleString():''}</div>
+    </div>
+  </div>`;
+
+  h+=`<div class="card" style="margin-bottom:16px">
+    <div class="card-title">Domain Score Breakdown</div>`;
+  DOMAINS.forEach(d=>{
+    const sc=ds[d.id]??0;const pct=(sc/d.max)*100;const dg=gradeOf(pct);
+    h+=`<div class="domain-row"><div class="domain-top"><span class="domain-name">${d.label}</span><span class="domain-score" style="color:${dg.c}">${sc}/${d.max}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${dg.c}"></div></div><div class="domain-std">${d.std}</div></div>`;
+  });
+  h+=`</div>`;
+
+  if(sorted.length){
+    h+=`<div class="card" style="margin-bottom:16px"><div class="card-title">Findings & Recommendations (${sorted.length})</div>`;
+    sorted.forEach(f=>{
+      const ss=sevStyle(f.severity);
+      h+=`<div class="finding" style="background:${ss.bg};border-left-color:${ss.color}"><div class="finding-top"><span class="sev-pill" style="${ss.pill}">${(f.severity||'').toUpperCase()}</span><span class="finding-std">${esc(f.standard)}</span></div><div class="finding-txt">${esc(f.finding)}</div>${f.location?`<div class="finding-loc">Location: ${esc(f.location)}</div>`:''}<div class="finding-rec">→ ${esc(f.recommendation)}</div></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  if(ia.length){
+    h+=`<div class="card"><div class="card-title">Photo-by-Photo Analysis</div><div class="img-tabs">`;
+    ia.forEach((_,i)=>{h+=`<button class="img-tab${i===state.selImg?' active':''}" onclick="selImg(${i})">Photo ${i+1}${state.images[i]?.label?' — '+esc(state.images[i].label):''}</button>`;});
+    h+=`</div>`;
+    const sel=ia[state.selImg];
+    const imgSrc=state.images[state.selImg]?.preview;
+    if(sel){
+      const issues=sel.issues||[];
+      const positives=sel.positives||[];
+      const hasCoordsI=issues.length&&typeof issues[0]==='object';
+      const hasCoordsP=positives.length&&typeof positives[0]==='object';
+      // ── Annotated photo ──
+      if(imgSrc){
+        h+=`<div style="position:relative;border-radius:8px;overflow:hidden;margin-bottom:18px;line-height:0;background:#111;">`;
+        h+=`<img src="${imgSrc}" style="width:100%;display:block;border-radius:8px;" alt="Property photo">`;
+        // Issue dots (red)
+        issues.forEach((item,i)=>{
+          const x=hasCoordsI?(item.x??50):(10+(i*15)%75);
+          const y=hasCoordsI?(item.y??50):(10+(i*21)%75);
+          h+=`<div style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#C0392B;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:Inter,sans-serif;pointer-events:none;">${i+1}</div>`;
+        });
+        // Strength dots (green)
+        positives.forEach((item,i)=>{
+          const x=hasCoordsP?(item.x??70):(55+(i*17)%40);
+          const y=hasCoordsP?(item.y??30):(15+(i*27)%65);
+          h+=`<div style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#0E7C5A;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:Inter,sans-serif;pointer-events:none;">${i+1}</div>`;
+        });
+        h+=`</div>`;
+      }
+      // ── Numbered lists ──
+      h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">`;
+      // Issues column
+      h+=`<div>`;
+      if(issues.length){
+        h+=`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#C0392B;margin-bottom:10px;">Issues Found</div>`;
+        issues.forEach((item,i)=>{
+          const txt=typeof item==='string'?item:(item.text||String(item));
+          h+=`<div style="display:flex;gap:9px;margin-bottom:9px;align-items:flex-start;"><div style="width:22px;height:22px;border-radius:50%;background:#C0392B;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px;">${i+1}</div><span style="font-size:12px;color:var(--text);line-height:1.55;">${esc(txt)}</span></div>`;
+        });
+      }
+      if((sel.cptedViolations||[]).length){
+        h+=`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--warn);margin-top:12px;margin-bottom:8px;">CPTED Violations</div>`;
+        sel.cptedViolations.forEach(x=>{h+=`<div class="ia-row"><span class="ia-icon" style="color:var(--warn)">⧫</span><span>${esc(x)}</span></div>`;});
+      }
+      h+=`</div>`;
+      // Strengths column
+      h+=`<div>`;
+      h+=`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0E7C5A;margin-bottom:10px;">Security Strengths</div>`;
+      if(positives.length){
+        positives.forEach((item,i)=>{
+          const txt=typeof item==='string'?item:(item.text||String(item));
+          h+=`<div style="display:flex;gap:9px;margin-bottom:9px;align-items:flex-start;"><div style="width:22px;height:22px;border-radius:50%;background:#0E7C5A;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px;">${i+1}</div><span style="font-size:12px;color:var(--text);line-height:1.55;">${esc(txt)}</span></div>`;
+        });
+      } else {
+        h+=`<div style="color:var(--gray-light);font-size:12px;margin-top:4px;">None identified in this photo</div>`;
+      }
+      h+=`</div></div>`;
+    }
+    h+=`</div>`;
+  }
+  return h;
+}
+
+function selImg(i){state.selImg=i;render();}
+
+function renderReport(){
+  const a=state.analysis;
+  if(!a||a.error)return'<div class="err">No report available.</div>';
+  const score=a.overallScore||0;const g=gradeOf(score);
+  const ci=a.clientInfo||{};const ds=a.domainScores||{};
+  const sorted=[...(a.findings||[])].sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]??4)-({critical:0,high:1,moderate:2,low:3}[y.severity]??4));
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  let h='<div style="display:flex;justify-content:flex-end;margin-bottom:16px"><button id="pdf-btn" onclick="downloadPDF()" style="background:var(--blue);border:none;border-radius:8px;padding:10px 22px;color:#fff;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download PDF Report</button></div>';
+  h+=`<div class="rpt-cover">
+    <div class="rpt-cover-bg"></div>
+    <div style="position:relative">
+      <div class="rpt-logo-text">MontroLabs Security Services</div>
+      <div class="rpt-title">Property Security Assessment Report</div>
+      <div class="rpt-client">Prepared for ${esc(ci.clientName||'Client')} &nbsp;·&nbsp; ${now}</div>
+      <div class="rpt-score-box">
+        <span style="color:#FFFFFF;font-size:32px;font-family:Georgia,serif;font-weight:700">${score}</span>
+        <span style="color:rgba(255,255,255,.6);font-size:14px"> /100</span>
+        <span style="color:${g.c==='#0E7C5A'?'#4AE0A8':g.c};font-size:14px;font-weight:600;margin-left:10px">Grade ${g.g} — ${g.label}</span>
+      </div>
+      <div class="rpt-std-line">Standards: CPTED · NFPA 730 · ASIS SPC.1 · ANSI/ASIS PSC.1 · IESNA RP-33 · NFPA 101 · IFC Ch.10 · OSHA 1910.37</div>
+    </div>
+  </div>`;
+
+  h+=`<div class="rpt-section"><div class="rpt-section-title">Property Information</div><table class="rpt-table">`;
+  [['Property Name',ci.propertyName||'—'],['Property Type',(ci.propertyType||'—').replace(/_/g,' ')],['Address',ci.address||'—'],['Contact',ci.contact||'—']].forEach(([k,v])=>{
+    h+=`<tr><td style="color:var(--gray);width:160px;font-weight:500">${k}</td><td>${esc(v)}</td></tr>`;
+  });
+  h+=`</table></div>`;
+
+  h+=`<div class="rpt-section"><div class="rpt-section-title">Executive Summary</div><p style="font-size:13px;line-height:1.8;color:var(--text)">${esc(a.executiveSummary||'Pending.')}</p></div>`;
+
+  h+=`<div class="rpt-section"><div class="rpt-section-title">Domain Scores</div><table class="rpt-table"><tr><th>Security Domain</th><th>Standard</th><th>Score</th><th>Max</th><th>Grade</th></tr>`;
+  const refs={perimeter:'ASIS SPC.1',surveillance:'CPTED P1',access:'ANSI/ASIS PSC.1',lighting:'IESNA RP-33',landscape:'CPTED P3',emergency:'NFPA 101',signage:'IFC Ch.10'};
+  DOMAINS.forEach(d=>{
+    const sc=ds[d.id]??0;const dg=gradeOf((sc/d.max)*100);
+    h+=`<tr><td style="font-weight:500">${d.label}</td><td style="color:var(--gray)">${refs[d.id]}</td><td style="font-weight:600;color:${dg.c}">${sc}</td><td style="color:var(--gray)">${d.max}</td><td style="font-weight:600;color:${dg.c}">${dg.g}</td></tr>`;
+  });
+  h+=`<tr style="background:var(--bg)"><td style="font-weight:700">Overall Score</td><td></td><td style="font-weight:700;font-size:15px;color:${g.c}">${score}</td><td style="color:var(--gray)">100</td><td style="font-weight:700;color:${g.c}">${g.g}</td></tr></table></div>`;
+
+  if((a.topPriorities||[]).length){
+    h+=`<div class="rpt-section" style="border-left:4px solid var(--danger)"><div class="rpt-section-title" style="color:var(--danger)">Immediate Action Items</div>`;
+    a.topPriorities.forEach((p,i)=>{h+=`<div class="rpt-priority"><div class="rpt-pri-num">${i+1}</div><div class="rpt-pri-txt">${esc(p)}</div></div>`;});
+    h+=`</div>`;
+  }
+
+  h+=`<div class="rpt-section"><div class="rpt-section-title">Detailed Findings & Recommendations</div>`;
+  sorted.forEach((f,i)=>{
+    const ss=sevStyle(f.severity);
+    h+=`<div class="finding" style="background:${ss.bg};border-left-color:${ss.color}"><div class="finding-top"><span class="sev-pill" style="${ss.pill}">${(f.severity||'').toUpperCase()}</span><span style="font-size:11px;font-weight:600;color:var(--gray)">F${String(i+1).padStart(3,'0')}</span><span class="finding-std">${esc(f.standard)}</span></div><div class="finding-txt">${esc(f.finding)}</div>${f.location?`<div class="finding-loc">Area: ${esc(f.location)}</div>`:''}<div class="finding-rec">→ ${esc(f.recommendation)}</div></div>`;
+  });
+  if(!sorted.length)h+=`<p style="color:var(--gray);font-size:13px">No specific findings recorded.</p>`;
+  h+=`</div>`;
+
+  h+=`<div class="rpt-section" style="text-align:center;background:var(--bg)">
+    <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">MontroLabs — Security Assessment Services</div>
+    <div style="font-size:11px;color:var(--gray-light);line-height:1.8">This report was generated using AI-assisted analysis and is intended to supplement, not replace, professional security consultation.<br>Standards referenced: CPTED · NFPA 730 · ASIS SPC.1 · ANSI/ASIS PSC.1 · IESNA RP-33 · NFPA 101 · IFC Ch.10 · OSHA 1910.37<br>Assessment pending review by MontroLabs — Ref: ${a.timestamp?new Date(a.timestamp).getTime().toString(36).toUpperCase():''}</div>
+  </div>`;
+  return h;
+}
+
+render();
+// Hide API key bar if using backend
+if(BACKEND_URL !== ''){
+  var bar = document.getElementById('api-bar-wrap');
+  if(bar) bar.style.display='none';
+}
+</script>
+</body>
+</html>
