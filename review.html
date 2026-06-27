@@ -739,7 +739,9 @@ function copyPrompt(){
 
 
 async function render(){
-  state.assessments = await fetchAssessments();
+  if(state.view!=='review'&&state.view!=='confirm'&&state.view!=='calibration'){
+    state.assessments = await fetchAssessments();
+  }
   var app=document.getElementById('app');
   if(state.view==='calibration') app.innerHTML=renderCalibration();
   else if(state.view==='queue') app.innerHTML=renderQueue();
@@ -802,7 +804,7 @@ function renderQueue(){
     h+='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No assessments here</div><p style="font-size:13px">Run an assessment in the main portal and it will appear in this queue automatically.</p></div>';
   } else {
     filtered.forEach(function(a){
-      var score=a.analysis&&a.analysis.overallScore||0;
+      var score=(a.overallScore)||(a.analysis&&a.analysis.overallScore)||0;
       var g=gradeOf(score);
       var statusClass={pending_review:'status-pending',in_review:'status-review',approved:'status-approved',needs_revision:'status-revision'}[a.status]||'status-pending';
       var statusLbl={pending_review:'Pending Review',in_review:'In Review',approved:'Approved',needs_revision:'Needs Revision'}[a.status]||'Pending';
@@ -859,7 +861,7 @@ function viewReview(id){
 function renderReview(){
   var a=getAssessment(state.currentId);
   if(!a) return '<div style="padding:20px;color:red">Assessment not found</div>';
-  var score=a.analysis&&a.analysis.overallScore||0;
+  var score=(a.overallScore)||(a.analysis&&a.analysis.overallScore)||0;
   var g=gradeOf(score);
 
   var h='';
