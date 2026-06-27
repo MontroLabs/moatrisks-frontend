@@ -219,7 +219,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 <script>
 // Simple password gate - change REVIEW_PASSWORD to your chosen password
-const REVIEW_PASSWORD = 'Ilovemoat339%';
+const REVIEW_PASSWORD = 'MOAT2026!';
 
 function checkPass(){
   var input = document.getElementById('gate-input').value;
@@ -362,14 +362,51 @@ function sevColor(s){return{critical:C.danger,high:C.orange,moderate:C.warn,low:
 function sevBg(s){return{critical:'#FDECEA',high:'#FEF0E6',moderate:'#FEF3C7',low:'#E8F7F2'}[s]||'#EEF2F7';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// ── Config ───────────────────────────────────────────────────────────────────
+const BACKEND = 'https://moatrisks-production.up.railway.app'; // temp until api.moatrisks.com resolves
+
 // ── Storage ──────────────────────────────────────────────────────────────────
+async function fetchAssessments(){
+  try{
+    var resp = await fetch(BACKEND+'/api/assessments');
+    if(resp.ok){
+      var data = await resp.json();
+      return data;
+    }
+  }catch(e){console.warn('Backend fetch failed, using localStorage:',e.message);}
+  // Fallback to localStorage
+  try{return JSON.parse(localStorage.getItem('montrolabs_queue')||'[]');}catch{return[];}
+}
+
+async function fetchAssessmentDetail(id){
+  try{
+    var resp = await fetch(BACKEND+'/api/assessments/'+id);
+    if(resp.ok) return await resp.json();
+  }catch(e){console.warn('Detail fetch failed:',e.message);}
+  // Fallback to localStorage
+  var arr = JSON.parse(localStorage.getItem('montrolabs_queue')||'[]');
+  return arr.find(function(a){return a.id===id;})||null;
+}
+
+async function saveVerificationToBackend(id, verification){
+  try{
+    var resp = await fetch(BACKEND+'/api/assessments/'+id+'/verify',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(verification)
+    });
+    if(resp.ok) return true;
+  }catch(e){console.warn('Verification save failed:',e.message);}
+  return false;
+}
+
 function loadAssessments(){
   try{return JSON.parse(localStorage.getItem('montrolabs_queue')||'[]');}catch{return[];}
 }
 function saveAssessments(arr){
-  try{localStorage.setItem('montrolabs_queue',JSON.stringify(arr));}catch(e){alert('Storage full: '+e.message);}
+  try{localStorage.setItem('montrolabs_queue',JSON.stringify(arr));}catch(e){console.warn('localStorage save failed');}
 }
-function getAssessment(id){return state.assessments.find(a=>a.id===id);}
+function getAssessment(id){return state.assessments.find(function(a){return a.id===id;});}
 
 // ── Review init ──────────────────────────────────────────────────────────────
 function initReview(assessment){
@@ -701,8 +738,8 @@ function copyPrompt(){
 }
 
 
-function render(){
-  state.assessments=loadAssessments();
+async function render(){
+  state.assessments = await fetchAssessments();
   var app=document.getElementById('app');
   if(state.view==='calibration') app.innerHTML=renderCalibration();
   else if(state.view==='queue') app.innerHTML=renderQueue();
@@ -794,16 +831,16 @@ function renderQueue(){
 function setFilter(f){state.filter=f;render();}
 
 // ── START REVIEW ─────────────────────────────────────────────────────────────
-function startReview(id){
-  var a=getAssessment(id);
-  if(!a) return;
+async function startReview(id){
+  var a = await fetchAssessmentDetail(id);
+  if(!a){alert('Could not load assessment. Try again.');return;}
+  // Merge into local state
+  var idx = state.assessments.findIndex(function(x){return x.id===id;});
+  if(idx>=0) state.assessments[idx]=a; else state.assessments.unshift(a);
   state.currentId=id;
   state.currentStep=0;
   state.review=initReview(a);
   state.showMissedForm={};
-  // Mark as in_review
-  a.status='in_review';
-  saveAssessments(state.assessments);
   state.view='review';
   render();
 }
@@ -1201,8 +1238,12 @@ function submitReview(){
 
   a.status=state.review.approvalStatus;
   a.verification=state.review;
+  // Save to backend (persists across devices)
+  saveVerificationToBackend(state.currentId, state.review).then(function(ok){
+    if(ok) console.log('Verification saved to database');
+    else console.warn('Backend save failed — saved locally only');
+  });
   saveAssessments(state.assessments);
-
   state.view='confirm';
   render();
 }
